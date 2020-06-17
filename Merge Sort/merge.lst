@@ -1,0 +1,170 @@
+   1 0000               #
+   2 0000               # FILE:         $File$
+   3 0000               # AUTHOR:       Phil White, RIT 2016
+   4 0000               #               
+   5 0000               # CONTRIBUTORS:
+   6 0000               #		R. Carnation
+   7 0000               #
+   8 0000               # DESCRIPTION:
+   9 0000               #	This file contains the merge function of mergesort
+  10 0000               #
+  11 0000               
+  12 0000               #-------------------------------
+  13 0000               
+  14 0000               #
+  15 0000               # Numeric Constants
+  16 0000               #
+  17 0000               
+  18 0000               PRINT_STRING = 4
+  19 0000               PRINT_INT = 1
+  20 0000               
+  21 0000               
+  22 0000               #***** BEGIN STUDENT CODE BLOCK 2 ***************************
+  23 0000               
+  24 0000               
+  25 0000               #
+  26 0000               # Make sure to add any .globl that you need here
+  27 0000               #
+  28 0000               .globl merge
+  29 0000               .globl sort
+  30 0000               
+  31 0000               #
+  32 0000               # Name:         merge
+  33 0000               # Description:  takes two individually sorted areas of an array and
+  34 0000               #		merges them into a single sorted area
+  35 0000               #
+  36 0000               #		The two areas are defined between (inclusive)
+  37 0000               #		area1:	low   - mid
+  38 0000               #		area2:	mid+1 - high
+  39 0000               #
+  40 0000               #		Note that the area will be contiguous in the array
+  41 0000               #
+  42 0000               # Arguments:    a0:     a parameter block containing 3 values
+  43 0000               #			- the address of the array to sort
+  44 0000               #			- the address of the scrap array needed by merge
+  45 0000               #			- the address of the compare function to use
+  46 0000               #			  when ordering data
+  47 0000               #               a1:     the index of the first element of the area
+  48 0000               #               a2:     the index of the last element of the area
+  49 0000               #               a3:     the index of the middle element of the area
+  50 0000               # Returns:      none
+  51 0000               # Destroys:     t0,t1
+  52 0000               #
+  53 0000               
+  54 0000               merge:
+  55 0000 23BDFFD8	        addi    $sp, $sp, -40              # make space for saved registers
+  56 0004 AFBF0024	        sw      $ra, 36($sp)               # store ra on the stack
+  57 0008 AFA40020	        sw      $a0, 32($sp)               # store a0 on the stack
+  58 000c AFA5001C	        sw      $a1, 28($sp)               # store a1 on the stack
+  59 0010 AFA60018	        sw      $a2, 24($sp)               # store a2 on the stack
+  60 0014 AFA70014	        sw      $a3, 20($sp)               # store a3 on the stack
+  61 0018 AFB40010	        sw      $s4, 16($sp)               # store s4 on the stack
+  62 001c AFB3000C	        sw      $s3, 12($sp)               # store s3 on the stack
+  63 0020 AFB20008	        sw      $s2, 8($sp)                # store s2 on the stack
+  64 0024 AFB10004	        sw      $s1, 4($sp)                # store s1 on the stack
+  65 0028 AFB00000	        sw      $s0, 0($sp)                # store s0 on the stack
+  66 002c               
+  67 002c 8C920000	        lw      $s2, 0($a0)                # load the addr of the array -> s2
+  68 0030 02408021	        move    $s0, $s2                   # copy address of array for later
+  69 0034 8C8E0004	        lw      $t6, 4($a0)                # load scrap array -> t6
+  70 0038 01C08821	        move    $s1, $t6                   # copy address of scrap array
+  71 003c 8C8F0008	        lw      $t7, 8($a0)                # load compare function -> t7
+  72 0040 02409821	        move    $s3, $s2                   # copy array -> s3
+  73 0044 00E05021	        move    $t2, $a3                   # copy midpoint -> t2
+  74 0048 214A0001	        addi    $t2, $t2, 1                # increment midpoint for area2
+  75 004c 00C05821	        move    $t3, $a2                   # copy end index -> t3
+  76 0050 216B0001	        addi    $t3, $t3, 1                # increment end index so inclusive
+  77 0054 00A06021	        move    $t4, $a1                   # copy start index -> t4
+  78 0058 01406821	        move    $t5, $t2                   # new copy of midpoint for reference
+  79 005c 0140C021	        move    $t8, $t2                   # yet another midpoint copy
+  80 0060 20080000	        addi    $t0, $zero, 0              # counter for first pointer
+  81 0064 00C5A022	        sub     $s4, $a2, $a1              # difference in start and end
+  82 0068 22940001	        addi    $s4, $s4, 1                # increment the difference
+  83 006c               set_first_pointer:
+  84 006c 11050004	        beq     $t0, $a1, set_second_pointer    # if t0 == start, pointer set
+  85 0070 22520004	        addi    $s2, $s2, 4                     # increment array
+  86 0074 21080001	        addi    $t0, $t0, 1                     # increment midpoint counter
+  87 0078 22100004	        addi    $s0, $s0, 4                     # increment main array pointer
+  88 007c 0800001B	        j       set_first_pointer               # jump to top of loop
+  89 0080               set_second_pointer:
+  90 0080 11400003	        beq     $t2, $zero, merge_loop     # if t2 == 0, pointer set
+  91 0084 22730004	        addi    $s3, $s3, 4                # increment array
+  92 0088 214AFFFF	        addi    $t2, $t2, -1               # decrement midpoint counter
+  93 008c 08000020	        j       set_second_pointer         # jump to top of loop
+  94 0090               merge_loop:
+  95 0090 118D000F	        beq     $t4, $t5, area1_empty      # if start = mid, area1 empty
+  96 0094 130B0015	        beq     $t8, $t3, area2_empty      # if mid = end, area2 empty
+  97 0098 8E440000	        lw      $a0, 0($s2)                # load area1 element -> a0
+  98 009c 8E650000	        lw      $a1, 0($s3)                # load area2 element -> a1
+  99 00a0 01E0F809	        jalr    $t7                        # jal to compare function
+ 100 00a4 10400005	        beq     $v0, $zero, area2_smaller  # if v0 = 0, area2 element smaller
+ 101 00a8 ADC40000	        sw      $a0, 0($t6)                # move area1 element -> scrap array
+ 102 00ac 22520004	        addi    $s2, $s2, 4                # increment area1
+ 103 00b0 218C0001	        addi    $t4, $t4, 1                # increment area1 counter
+ 104 00b4 21CE0004	        addi    $t6, $t6, 4                # increment scrap array
+ 105 00b8 08000024	        j       merge_loop                 # jump back to loop
+ 106 00bc               area2_smaller:
+ 107 00bc ADC50000	        sw      $a1, 0($t6)                # move area2 element -> scrap array
+ 108 00c0 22730004	        addi    $s3, $s3, 4                # increment area2
+ 109 00c4 23180001	        addi    $t8, $t8, 1                # increment area2 counter
+ 110 00c8 21CE0004	        addi    $t6, $t6, 4                # increment scrap array
+ 111 00cc 08000024	        j       merge_loop                 # jump back to loop
+ 112 00d0               area1_empty:
+ 113 00d0 130B000D	        beq     $t8, $t3, copy_scrap       # if start area2 = end, done
+ 114 00d4 8E640000	        lw      $a0, 0($s3)                # load current area2 element
+ 115 00d8 ADC40000	        sw      $a0, 0($t6)                # move element to scrap array
+ 116 00dc 22730004	        addi    $s3, $s3, 4                # increment area2
+ 117 00e0 23180001	        addi    $t8, $t8, 1                # increment area2 counter
+ 118 00e4 21CE0004	        addi    $t6, $t6, 4                # increment scrap array
+ 119 00e8 08000034	        j       area1_empty                # jump back to loop
+ 120 00ec               area2_empty:
+ 121 00ec 118D0006	        beq     $t4, $t5, copy_scrap       # if start area1 = mid, done
+ 122 00f0 8E440000	        lw      $a0, 0($s2)                # load current area1 element
+ 123 00f4 ADC40000	        sw      $a0, 0($t6)                # move element to scrap array
+ 124 00f8 22520004	        addi    $s2, $s2, 4                # increment area1
+ 125 00fc 218C0001	        addi    $t4, $t4, 1                # increment area1 counter
+ 126 0100 21CE0004	        addi    $t6, $t6, 4                # increment scrap array
+ 127 0104 0800003B	        j       area2_empty                # jump back to loop
+ 128 0108               copy_scrap:
+ 129 0108 12800006	        beq     $s4, $zero, merge_done     # if end index = 0, done copy
+ 130 010c 8E240000	        lw      $a0, 0($s1)                # load element from scrap
+ 131 0110 AE040000	        sw      $a0, 0($s0)                # store element in OG array
+ 132 0114 22310004	        addi    $s1, $s1, 4                # increment scrap array pointer
+ 133 0118 22100004	        addi    $s0, $s0, 4                # increment OG array pointer
+ 134 011c 2294FFFF	        addi    $s4, $s4, -1               # decrement end index
+ 135 0120 08000042	        j       copy_scrap                 # jump to top of loop
+ 136 0124               merge_done:
+ 137 0124 8FBF0024	        lw      $ra, 36($sp)               # restore ra from stack
+ 138 0128 8FA40020	        lw      $a0, 32($sp)               # store a0 on the stack
+ 139 012c 8FA5001C	        lw      $a1, 28($sp)               # store a1 on the stack
+ 140 0130 8FA60018	        lw      $a2, 24($sp)               # store a2 on the stack
+ 141 0134 8FA70014	        lw      $a3, 20($sp)               # store a3 on the stack
+ 142 0138 8FB40010	        lw      $s4, 16($sp)               # restore s4 from stack
+ 143 013c 8FB3000C	        lw      $s3, 12($sp)               # restore s3 from stack
+ 144 0140 8FB20008	        lw      $s2, 8($sp)                # restore s2 from stack
+ 145 0144 8FB10004	        lw      $s1, 4($sp)                # restore s1 from stack
+ 146 0148 8FB00000	        lw      $s0, 0($sp)                # restore s0 from stck
+ 147 014c 23BD0028	        addi    $sp, $sp, 40               # move sp back
+ 148 0150               
+ 149 0150 03E00008	        jr      $ra                        # return to caller
+ 150 0154                       
+ 151 0154               
+ 152 0154               # ********** END STUDENT CODE BLOCK 2 **********
+ 153 0154               
+ 154 0154               #
+ 155 0154               # End of Merge routine.
+ 156 0154               #
+
+
+PRINT_INT           = 00000001   
+PRINT_STRING        = 00000004   
+area1_empty           000000D0 R  text 
+area2_empty           000000EC R  text 
+area2_smaller         000000BC R  text 
+copy_scrap            00000108 R  text 
+merge                 00000000 RG text 
+merge_done            00000124 R  text 
+merge_loop            00000090 R  text 
+set_first_pointer     0000006C R  text 
+set_second_pointer    00000080 R  text 
+sort                  ******** XG

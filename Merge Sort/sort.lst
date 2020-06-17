@@ -1,0 +1,112 @@
+   1 0000               #
+   2 0000               # FILE:         $File$
+   3 0000               # AUTHOR:       Phil White, RIT 2016
+   4 0000               # CONTRIBUTORS:
+   5 0000               #		W. Carithers
+   6 0000               #		R. Carnation
+   7 0000               #
+   8 0000               # DESCRIPTION:
+   9 0000               #	This program is an implementation of merge sort in MIPS
+  10 0000               #	assembly 
+  11 0000               #
+  12 0000               # ARGUMENTS:
+  13 0000               #	None
+  14 0000               #
+  15 0000               # INPUT:
+  16 0000               # 	The numbers to be sorted.  The user will enter a 9999 to
+  17 0000               #	represent the end of the data
+  18 0000               #
+  19 0000               # OUTPUT:
+  20 0000               #	A "before" line with the numbers in the order they were
+  21 0000               #	entered, and an "after" line with the same numbers sorted.
+  22 0000               #
+  23 0000               # REVISION HISTORY:
+  24 0000               #	Aug  08		- P. White, original version
+  25 0000               #
+  26 0000               
+  27 0000               #-------------------------------
+  28 0000               
+  29 0000               #
+  30 0000               # Numeric Constants
+  31 0000               #
+  32 0000               
+  33 0000               PRINT_STRING = 4
+  34 0000               PRINT_INT = 1
+  35 0000               
+  36 0000               #-------------------------------
+  37 0000               
+  38 0000               #
+  39 0000               
+  40 0000               # ********** BEGIN STUDENT CODE BLOCK 1 **********
+  41 0000               
+  42 0000               #
+  43 0000               # Make sure to add any .globl that you need here
+  44 0000               #
+  45 0000               
+  46 0000               .globl merge
+  47 0000               .globl sort
+  48 0000               
+  49 0000               # Name:         sort
+  50 0000               # Description:  sorts an array of integers using the merge sort
+  51 0000               #		algorithm
+  52 0000               # 		Arguments Note: a1 and a2 specify the range inclusively
+  53 0000               #
+  54 0000               # Arguments:    a0:     a parameter block containing 3 values
+  55 0000               #                       - the address of the array to sort
+  56 0000               #                       - the address of the scrap array needed by merge
+  57 0000               #                       - the address of the compare function to use
+  58 0000               #                         when ordering data
+  59 0000               #               a1:     the index of the first element in the range to sort
+  60 0000               #               a2:     the index of the last element in the range to sort
+  61 0000               # Returns:      none
+  62 0000               #
+  63 0000               
+  64 0000               sort:
+  65 0000 23BDFFF0	        addi    $sp, $sp, -16                 # make space for ra/variables
+  66 0004 AFBF000C	        sw      $ra, 12($sp)                  # push ra on the stack
+  67 0008               #        sw      $a0, 12($sp)                  # push parameter block on stack
+  68 0008 AFA50008	        sw      $a1, 8($sp)                   # push first index on stack
+  69 000c AFA60004	        sw      $a2, 4($sp)                   # push second index on stack
+  70 0010               
+  71 0010 00C54022	        sub     $t0, $a2, $a1                 # sub first index from second
+  72 0014 20090001	        addi    $t1, $zero, 1                 # load 2 into temp reg (t1)
+  73 0018 0109502A	        slt     $t2, $t0, $t1                 # check if t0 < t1, t2 = 1|0 
+  74 001c 1540000F	        bne     $t2, $zero, sort_done         # if t2 = 1|0, return 
+  75 0020               
+  76 0020 00A65820	        add     $t3, $a1, $a2                 # add left and right indexes
+  77 0024 34010002	        div     $t3, $t3, 2                   # divide by 2, midpoint -> t3
+     0028 0161001A
+     002c 00005812
+  78 0030 AFAB0000	        sw      $t3, 0($sp)                   # store midpoint on stack
+  79 0034 01603021	        move    $a2, $t3                      # move mid to high for first half
+  80 0038 0C000000	        jal     sort                          # call sort on first half
+  81 003c               
+  82 003c 8FA50000	        lw      $a1, 0($sp)                   # load midpoint
+  83 0040 20A50001	        addi    $a1, $a1, 1                   # increment mid by 1 -> low
+  84 0044 8FA60004	        lw      $a2, 4($sp)                   # load second index
+  85 0048 0C000000	        jal     sort                          # call sort on second half
+  86 004c               
+  87 004c 8FA70000	        lw      $a3, 0($sp)                   # load midpoint
+  88 0050 8FA60004	        lw      $a2, 4($sp)                   # load second index
+  89 0054 8FA50008	        lw      $a1, 8($sp)                   # load first index
+  90 0058               #        lw      $a0, 8($sp)                   # load parameter block
+  91 0058 0C000000	        jal     merge                         # call the merge routine
+  92 005c               
+  93 005c               sort_done:
+  94 005c 8FBF000C	        lw      $ra, 12($sp)                  # load the return address
+  95 0060 23BD0010	        addi    $sp, $sp, 16                  # move stack pointer back
+  96 0064               
+  97 0064 03E00008	        jr      $ra                           # return to caller
+  98 0068               
+  99 0068               # ********** END STUDENT CODE BLOCK 1 **********
+ 100 0068               
+ 101 0068               #
+ 102 0068               # End of Merge sort routine.
+ 103 0068               #
+
+
+PRINT_INT     = 00000001   
+PRINT_STRING  = 00000004   
+merge           ******** XG
+sort            00000000 RG text 
+sort_done       0000005C R  text 
