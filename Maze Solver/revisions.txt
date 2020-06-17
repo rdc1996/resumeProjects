@@ -1,0 +1,29 @@
+commit f383cf72b9e2baea6d1060bd1ee1a6f4a5ba77db
+Author: Ryan Daniel Carnation <rdc1996@cs.rit.edu>
+Date:   Sat Nov 3 18:30:38 2018 -0400
+
+    Added the ability to read from standard input.
+
+commit 98a632cffeec5d9898fa22a9ffef67ac55af7e76
+Author: Ryan Daniel Carnation <rdc1996@cs.rit.edu>
+Date:   Thu Nov 1 21:31:55 2018 -0400
+
+    Fixed bug where algorithm was not checking if entrance was a wall or not
+    mopsolver.c:findShortest:111
+
+commit ceb21b1bc9de6246e0e65416caf2bab0173bef7f
+Author: Ryan Daniel Carnation <rdc1996@cs.rit.edu>
+Date:   Thu Nov 1 18:51:33 2018 -0400
+
+    Fixed a bug where the step size was one lower than it should have been
+    mopsolver.c:main:363
+    
+    Also fixed a bug where the the exit was not showing as a '+' but instead
+    a '.' mopsolver.c:main:362
+
+commit 8b69c1c601e97817c6d7d6e685067c953707fcd5
+Author: Ryan Daniel Carnation <rdc1996@cs.rit.edu>
+Date:   Thu Nov 1 18:37:06 2018 -0400
+
+    Forgot to commit most of my changes, this is almost the complete program
+    but with some bugs and does not handle stdin.
