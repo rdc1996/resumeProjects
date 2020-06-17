@@ -1,0 +1,29 @@
+commit d40827440c76e54b81819afee15140493f22e5bc
+Author: Ryan Daniel Carnation <rdc1996@cs.rit.edu>
+Date:   Sat Dec 8 23:51:20 2018 -0500
+
+    Added comments to missile.c and missile.h
+
+commit 0f46d20f36213649e8ae309cdbe7156093ad6f5c
+Author: Ryan Daniel Carnation <rdc1996@cs.rit.edu>
+Date:   Sat Dec 8 23:46:38 2018 -0500
+
+    Added documentation to attack.c and attack.h
+
+commit 5a475692e36c8a3a8f37100edb6869b9fc1a2ceb
+Author: Ryan Daniel Carnation <rdc1996@cs.rit.edu>
+Date:   Sat Dec 8 23:40:31 2018 -0500
+
+    Added documentation to defense.c and defense.h
+
+commit ada9ed751a917228f038398a4863a19673db2ddc
+Author: Ryan Daniel Carnation <rdc1996@cs.rit.edu>
+Date:   Sat Dec 8 23:22:38 2018 -0500
+
+    Added documentation to threads.h and threads.c
+
+commit 7a8761baddba4ecd64ae1c1fdc277785c9694c59
+Author: Ryan Daniel Carnation <rdc1996@cs.rit.edu>
+Date:   Tue Dec 4 13:10:07 2018 -0500
+
+    Initial checkin
