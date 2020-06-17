@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PostResignGameRoute.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">WebCheckers Application Tier Test Coverage</a> &gt; <a href="index.source.html" class="el_package">com.webcheckers.ui</a> &gt; <span class="el_source">PostResignGameRoute.java</span></div><h1>PostResignGameRoute.java</h1><pre class="source lang-java linenums">package com.webcheckers.ui;
+
+import com.google.gson.Gson;
+import com.webcheckers.model.Game;
+import com.webcheckers.application.GameLobby;
+import com.webcheckers.model.Player;
+import com.webcheckers.application.Message;
+import com.webcheckers.model.PlayerColor;
+import spark.*;
+import java.util.logging.Logger;
+import static com.webcheckers.ui.GetGameRoute.CURRENT_USER_ATTR;
+
+/**
+ * This action tells the server that this player is resigning the game.
+ * If it's this user's turn then the is only enabled in the Empty Turn state.
+ * Once the user makes a valid move then this button is disabled.
+ * The user may backup from the move to go back to the Empty Turn state,
+ * which will reenable the Resign button.
+ *
+ * The response body must be a message that has type INFO if the action was successful or ERROR
+ * if it was unsuccessful. When successful the client-side code will send the user back to the Home page.
+ */
+public class PostResignGameRoute implements Route {
+
+<span class="fc" id="L25">    private static final Logger LOG = Logger.getLogger(GetGameRoute.class.getName());</span>
+    private GameLobby gameLobby;
+
+<span class="fc" id="L28">    public PostResignGameRoute(GameLobby gameLobby) {</span>
+<span class="fc" id="L29">        this.gameLobby = gameLobby;</span>
+<span class="fc" id="L30">        LOG.config(&quot;PostResigngame is initialized.&quot;);</span>
+<span class="fc" id="L31">    }</span>
+
+    @Override
+    public Object handle(Request request, Response response) {
+<span class="fc" id="L35">        LOG.config(&quot;ResignGame was Invoked&quot;);</span>
+<span class="fc" id="L36">        Session httpSession = request.session();</span>
+<span class="fc" id="L37">        Player currentPlayer = httpSession.attribute(CURRENT_USER_ATTR);</span>
+<span class="fc" id="L38">        Game currentGame = gameLobby.getGame(currentPlayer.getGameID());</span>
+<span class="fc" id="L39">        Player opponent = currentGame.getOpponent(currentPlayer);</span>
+<span class="fc" id="L40">        gameLobby.resigned(currentGame, currentPlayer);</span>
+        //set the winner so that they get the win screen called by the checkTurnRoute
+//        if (opponent.getColor().equals(PlayerColor.RED)) {
+//            currentGame.setWinner(Game.Win.RED);
+//        } else {
+//            currentGame.setWinner(Game.Win.WHITE);
+//        }
+<span class="fc" id="L47">        Gson gson = new Gson();</span>
+<span class="fc" id="L48">        Message resignedMessage = new Message(&quot;You successfully resigned&quot;, Message.Type.INFO);</span>
+<span class="fc" id="L49">        return gson.toJson(resignedMessage);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span>Application Tier</div></body></html>

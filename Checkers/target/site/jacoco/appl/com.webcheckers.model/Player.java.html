@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Player.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">WebCheckers Application Tier Test Coverage</a> &gt; <a href="index.source.html" class="el_package">com.webcheckers.model</a> &gt; <span class="el_source">Player.java</span></div><h1>Player.java</h1><pre class="source lang-java linenums">package com.webcheckers.model;
+
+public class Player {
+
+    // Name of the player.
+    private String name;
+
+    // The current state that the player is in.
+    private currentState currentState;
+
+    // The id of the game that this player is in.
+    private String gameID;
+
+    private PlayerColor color;
+
+    // Used by a spectator player to get game
+<span class="fc" id="L17">    private Player redPlayer = this;</span>
+
+    // The different states that the player can be in.
+<span class="fc" id="L20">    public enum currentState {</span>
+<span class="fc" id="L21">        WAITING, INGAME, CHALLENGE</span>
+    }
+
+<span class="fc" id="L24">    public Player() {</span>
+<span class="fc" id="L25">        this.name = &quot;WhiteBot&quot;;</span>
+<span class="fc" id="L26">    }</span>
+
+<span class="fc" id="L28">    public Player(String name){</span>
+<span class="fc" id="L29">        this.name = name;</span>
+<span class="fc" id="L30">    }</span>
+
+    /**
+     * Get the name of the current player.
+     *
+     * @return the name of the player
+     */
+    public String getName(){
+<span class="fc" id="L38">        return name;</span>
+    }
+
+    /**
+     * Get the current state of the player.
+     *
+     * @return the current state of the player
+     */
+    public currentState getCurrentState() {
+<span class="fc" id="L47">        return this.currentState;</span>
+    }
+
+    /**
+     * Set the current state of the player.
+     *
+     * @param currentState what the players state should be set to
+     */
+    public void setCurrentState(currentState currentState) {
+<span class="fc" id="L56">        this.currentState = currentState;</span>
+<span class="fc" id="L57">    }</span>
+
+    /**
+     * Set the players game id.
+     *
+     * @param gameID what the players game id should be set to
+     */
+    public void setGameID(String gameID) {
+<span class="fc" id="L65">        this.gameID = gameID;</span>
+<span class="fc" id="L66">    }</span>
+
+    /**
+     * Get this players game id.
+     *
+     * @return the game id of the player
+     */
+    public String getGameID() {
+<span class="fc" id="L74">        return this.gameID;</span>
+    }
+
+    /**
+     * Get the player's color.
+     *
+     * @return their color
+     */
+    public PlayerColor getColor() {
+<span class="fc" id="L83">        return color;</span>
+    }
+
+    /**
+     * Set the player's color.
+     *
+     * @param color the color being set
+     */
+    public void setColor(PlayerColor color) {
+<span class="fc" id="L92">        this.color = color;</span>
+<span class="fc" id="L93">    }</span>
+
+    /**
+     * Get the redPlayer for a spectator.
+     *
+     * @return redPlayer used to put game in gameLobby
+     */
+    public Player getRedPlayer() {
+<span class="fc" id="L101">        return redPlayer;</span>
+    }
+
+    /**
+     * Set the red player for a spectated game.
+     *
+     * @param redPlayer initial redPlayer in a spectated game
+     */
+    public void setRedPlayer(Player redPlayer) {
+<span class="nc" id="L110">        this.redPlayer = redPlayer;</span>
+<span class="nc" id="L111">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span>Application Tier</div></body></html>

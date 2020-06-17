@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Row.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">WebCheckers Model Tier Test Coverage</a> &gt; <a href="index.source.html" class="el_package">com.webcheckers.model.Board</a> &gt; <span class="el_source">Row.java</span></div><h1>Row.java</h1><pre class="source lang-java linenums">package com.webcheckers.model.Board;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+
+/**
+ * The data structure to represent the rows on the board
+ */
+public class Row implements Iterable {
+
+    // The index representing how far from the top this row lies.
+    private int index;
+    // The list of spaces that are contained in this row.
+    private ArrayList&lt;Space&gt; spaces;
+
+<span class="fc" id="L16">    public Row(int index) {</span>
+<span class="fc" id="L17">        this.index = index;</span>
+<span class="fc" id="L18">        this.spaces = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L19">    }</span>
+
+    /**
+     * Get the index of this row
+     *
+     * @return and integer representing the index
+     */
+    public int getIndex() {
+<span class="nc" id="L27">        return index;</span>
+    }
+
+    /**
+     * Add a space to this set of rows, should never be more or less than 8 spaces.
+     *
+     * @param add the space to be added.
+     */
+    public void addSpace(Space add) {
+<span class="fc" id="L36">        spaces.add(add);</span>
+<span class="fc" id="L37">    }</span>
+
+    /**
+     * Create a duplicate space of the one at the given index to create an identical board
+     * for the white player.
+     *
+     * @param index the space that needs to be duplicated
+     * @return the duplicate of the space at the given index
+     */
+    public Space duplicateSpace(int index) {
+<span class="fc" id="L47">        Space oldSpace = spaces.get(index);</span>
+<span class="fc" id="L48">        int oldCol = oldSpace.getCellIdx();</span>
+<span class="fc" id="L49">        int oldRow = oldSpace.getMyRow();</span>
+<span class="fc" id="L50">        Piece oldPiece = oldSpace.getPiece();</span>
+<span class="fc" id="L51">        Space.COLOR oldColor = oldSpace.getColor();</span>
+<span class="fc" id="L52">        Space returnSpace = new Space(7 - oldRow, 7 - oldCol, oldColor, oldPiece);</span>
+<span class="fc" id="L53">        return returnSpace;</span>
+    }
+
+    /**
+     * Get the number of spaces in the row.
+     *
+     * @return the size of the spaces array
+     */
+    public int getSize() {
+<span class="fc" id="L62">        return spaces.size();</span>
+    }
+
+    /**
+     * Get the space at the given index.
+     *
+     * @param index the index of the space wanted
+     * @return the space at the specified index on the board
+     */
+    public Space getSpace(int index) {
+<span class="fc" id="L72">        return spaces.get(index);</span>
+    }
+
+    /**
+     * Class to represent the iterator to loop through all of the spaces in the row.
+     *
+     * @return the iterator
+     */
+    public Iterator&lt;Space&gt; iterator() {
+<span class="nc" id="L81">        return new Iterator&lt;Space&gt;() {</span>
+
+            int current;
+
+            @Override
+            public boolean hasNext() {
+<span class="nc bnc" id="L87" title="All 2 branches missed.">                if (current &lt; spaces.size()) {</span>
+<span class="nc" id="L88">                    return true;</span>
+                }
+<span class="nc" id="L90">                return false;</span>
+            }
+
+            @Override
+            public Space next() {
+<span class="nc" id="L95">                Space tempSpace = spaces.get(current);</span>
+<span class="nc" id="L96">                current++;</span>
+<span class="nc" id="L97">                return tempSpace;</span>
+            }
+        };
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span>Model Tier</div></body></html>

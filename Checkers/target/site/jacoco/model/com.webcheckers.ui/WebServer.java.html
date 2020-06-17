@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WebServer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">WebCheckers Model Tier Test Coverage</a> &gt; <a href="index.source.html" class="el_package">com.webcheckers.ui</a> &gt; <span class="el_source">WebServer.java</span></div><h1>WebServer.java</h1><pre class="source lang-java linenums">package com.webcheckers.ui;
+
+import static spark.Spark.*;
+
+import java.util.Objects;
+import java.util.logging.Logger;
+
+import com.google.gson.Gson;
+
+import com.webcheckers.application.GameLobby;
+import com.webcheckers.model.Move;
+import com.webcheckers.application.PlayerLobby;
+import spark.TemplateEngine;
+
+
+/**
+ * The server that initializes the set of HTTP request handlers.
+ * This defines the &lt;em&gt;web application interface&lt;/em&gt; for this
+ * WebCheckers application.
+ *
+ * &lt;p&gt;
+ * There are multiple ways in which you can have the client issue a
+ * request and the application generate responses to requests. If your team is
+ * not careful when designing your approach, you can quickly create a mess
+ * where no one can remember how a particular request is issued or the response
+ * gets generated. Aim for consistency in your approach for similar
+ * activities or requests.
+ * &lt;/p&gt;
+ *
+ * &lt;p&gt;Design choices for how the client makes a request include:
+ * &lt;ul&gt;
+ *     &lt;li&gt;Request URL&lt;/li&gt;
+ *     &lt;li&gt;HTTP verb for request (GET, POST, PUT, DELETE and so on)&lt;/li&gt;
+ *     &lt;li&gt;&lt;em&gt;Optional:&lt;/em&gt; Inclusion of request parameters&lt;/li&gt;
+ * &lt;/ul&gt;
+ * &lt;/p&gt;
+ *
+ * &lt;p&gt;Design choices for generating a response to a request include:
+ * &lt;ul&gt;
+ *     &lt;li&gt;View templates with conditional elements&lt;/li&gt;
+ *     &lt;li&gt;Use different view templates based on results of executing the client request&lt;/li&gt;
+ *     &lt;li&gt;Redirecting to a different application URL&lt;/li&gt;
+ * &lt;/ul&gt;
+ * &lt;/p&gt;
+ *
+ * @author &lt;a href='mailto:bdbvse@rit.edu'&gt;Bryan Basham&lt;/a&gt;
+ */
+public class WebServer {
+<span class="fc" id="L49">  private static final Logger LOG = Logger.getLogger(WebServer.class.getName());</span>
+
+  //
+  // Constants
+  //
+
+  /**
+   * The URL pattern to request the Home page.
+   */
+  public static final String HOME_URL = &quot;/&quot;;
+
+  /**
+   * The URL pattern for the signin page.
+   */
+  public static final String SIGNIN_URL = &quot;/signin&quot;;
+
+  /**
+   * The URL pattern for the game page.
+   */
+  public static final String GAME_URL = &quot;/game&quot;;
+
+  /**
+   * The URL pattern for the signout page.
+   */
+  public static final String SIGNOUT_URL = &quot;/signout&quot;;
+
+  //AJAX actions for the Plaing my turn state
+  /**
+   * The URL pattern for validating a move
+   */
+  public static final String VALIDATE_MOVE = &quot;/validateMove&quot;;
+
+  /**
+   * Submitting a turn
+   */
+  public static final String SUBMIT_MOVE = &quot;/submitTurn&quot;;
+
+  /**
+   * backing up a move
+   */
+  public static final String BACKUP_MOVE =&quot;/backupMove&quot;;
+
+  /**
+   * resign the game
+   */
+  public static final String RESIGN_GAME = &quot;/resignGame&quot;;
+
+  /**
+   * Checks to see if it is the turn of this user
+   */
+  public static final String CHECK_TURN = &quot;/checkTurn&quot;;
+
+  /**
+   * The URL pattern for the game page for a spectator.
+   */
+  public static final String SPECTATOR_GAME = &quot;/spectator/game&quot;;
+
+  /**
+   * The URL pattern to stop watching as a spectator.
+   */
+  public static final String SPECTATOR_STOP = &quot;/spectator/stopWatching&quot;;
+
+  /**
+   * The URL pattern to check to see if there is a new turn made.
+   */
+  public static final String SPECTATOR_CHECK = &quot;/spectator/checkTurn&quot;;
+
+  //
+  // Attributes
+  //
+
+  private final TemplateEngine templateEngine;
+  private final Gson gson;
+  private PlayerLobby playerLobby;
+  private GameLobby gameLobby;
+  private Move move;
+
+  //
+  // Constructor
+  //
+
+  /**
+   * The constructor for the Web Server.
+   *
+   * @param templateEngine
+   *    The default {@link TemplateEngine} to render page-level HTML views.
+   * @param gson
+   *    The Google JSON parser object used to render Ajax responses.
+   *
+   * @throws NullPointerException
+   *    If any of the parameters are {@code null}.
+   */
+<span class="fc" id="L141">  public WebServer(final TemplateEngine templateEngine, final Gson gson, PlayerLobby playerLobby, GameLobby gameLobby) {</span>
+    // validation
+<span class="fc" id="L143">    Objects.requireNonNull(templateEngine, &quot;templateEngine must not be null&quot;);</span>
+<span class="fc" id="L144">    Objects.requireNonNull(gson, &quot;gson must not be null&quot;);</span>
+    //
+<span class="fc" id="L146">    this.templateEngine = templateEngine;</span>
+<span class="fc" id="L147">    this.gson = gson;</span>
+<span class="fc" id="L148">    this.playerLobby = playerLobby;</span>
+<span class="fc" id="L149">    this.gameLobby = gameLobby;</span>
+<span class="fc" id="L150">  }</span>
+
+  //
+  // Public methods
+  //
+
+  /**
+   * Initialize all of the HTTP routes that make up this web application.
+   *
+   * &lt;p&gt;
+   * Initialization of the web server includes defining the location for static
+   * files, and defining all routes for processing client requests. The method
+   * returns after the web server finishes its initialization.
+   * &lt;/p&gt;
+   */
+  public void initialize() {
+
+    // Configuration to serve static files
+<span class="fc" id="L168">    staticFileLocation(&quot;/public&quot;);</span>
+
+    //// Setting any route (or filter) in Spark triggers initialization of the
+    //// embedded Jetty web server.
+
+    //// A route is set for a request verb by specifying the path for the
+    //// request, and the function callback (request, response) -&gt; {} to
+    //// process the request. The order that the routes are defined is
+    //// important. The first route (request-path combination) that matches
+    //// is the one which is invoked. Additional documentation is at
+    //// http://sparkjava.com/documentation.html and in Spark tutorials.
+
+    //// Each route (processing function) will check if the request is valid
+    //// from the client that made the request. If it is valid, the route
+    //// will extract the relevant data from the request and pass it to the
+    //// application object delegated with executing the request. When the
+    //// delegate completes execution of the request, the route will create
+    //// the parameter map that the response template needs. The data will
+    //// either be in the value the delegate returns to the route after
+    //// executing the request, or the route will query other application
+    //// objects for the data needed.
+
+    //// FreeMarker defines the HTML response using templates. Additional
+    //// documentation is at
+    //// http://freemarker.org/docs/dgui_quickstart_template.html.
+    //// The Spark FreeMarkerEngine lets you pass variable values to the
+    //// template via a map. Additional information is in online
+    //// tutorials such as
+    //// http://benjamindparrish.azurewebsites.net/adding-freemarker-to-java-spark/.
+
+    //// These route definitions are examples. You will define the routes
+    //// that are appropriate for the HTTP client interface that you define.
+    //// Create separate Route classes to handle each route; this keeps your
+    //// code clean; using small classes.
+
+    // Shows the Checkers game Home page.
+<span class="fc" id="L204">    get(HOME_URL, new GetHomeRoute(templateEngine, playerLobby, gameLobby));</span>
+
+    // Shows the game view
+<span class="fc" id="L207">    get(GAME_URL, new GetGameRoute(templateEngine, playerLobby, gameLobby));</span>
+
+    // Shows the game view for a spectator
+<span class="fc" id="L210">    get(SPECTATOR_GAME, new GetSpectatorGame(templateEngine, playerLobby, gameLobby));</span>
+
+    // Shows the Checkers sign in page
+<span class="fc" id="L213">    get(SIGNIN_URL, new GetSigninRoute(templateEngine));</span>
+
+    //Action controls the exit button in the controls panel for spactetor
+<span class="fc" id="L216">    get(SPECTATOR_STOP, new GetSpectatorStopWatching(templateEngine, gameLobby));</span>
+
+    // Get request for the sign out operation
+<span class="fc" id="L219">    post(SIGNOUT_URL, new PostSignoutRoute(playerLobby));</span>
+
+    // Post a request to sign in
+<span class="fc" id="L222">    post(SIGNIN_URL, new PostSigninRoute(templateEngine, playerLobby));</span>
+
+    // Player resigns game
+<span class="fc" id="L225">    post(RESIGN_GAME, new PostResignGameRoute(gameLobby));</span>
+
+    // Post a valid move
+<span class="fc" id="L228">    post(VALIDATE_MOVE, new PostValidateMove(gameLobby, gson));</span>
+
+    // Post check turn
+<span class="fc" id="L231">    post(CHECK_TURN, new PostCheckTurn(gameLobby));</span>
+
+    // Post check turn for a spectator
+<span class="fc" id="L234">    post(SPECTATOR_CHECK, new PostSpectatorCheckTurn(gameLobby));</span>
+
+    // Post submit a turn
+<span class="fc" id="L237">    post(SUBMIT_MOVE, new PostSubmitTurn(gameLobby, gson));</span>
+
+    // post back a move
+<span class="fc" id="L240">    post(BACKUP_MOVE, new PostBackupMove(gameLobby));</span>
+
+
+
+
+    //
+<span class="fc" id="L246">    LOG.config(&quot;WebServer is initialized.&quot;);</span>
+<span class="fc" id="L247">  }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span>Model Tier</div></body></html>

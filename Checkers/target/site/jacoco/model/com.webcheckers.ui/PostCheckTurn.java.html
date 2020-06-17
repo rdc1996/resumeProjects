@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PostCheckTurn.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">WebCheckers Model Tier Test Coverage</a> &gt; <a href="index.source.html" class="el_package">com.webcheckers.ui</a> &gt; <span class="el_source">PostCheckTurn.java</span></div><h1>PostCheckTurn.java</h1><pre class="source lang-java linenums">package com.webcheckers.ui;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.webcheckers.model.AIPlayer;
+import com.webcheckers.model.Board.BoardView;
+import com.webcheckers.model.Game;
+import com.webcheckers.application.GameLobby;
+import com.webcheckers.model.Player;
+import com.webcheckers.model.PlayerColor;
+import com.webcheckers.application.Message;
+import spark.*;
+import java.util.logging.Logger;
+import static com.webcheckers.ui.GetGameRoute.*;
+
+public class PostCheckTurn implements Route {
+
+    private GameLobby gameLobby;
+<span class="fc" id="L19">    private static final Logger LOG = Logger.getLogger(GetGameRoute.class.getName());</span>
+
+<span class="fc" id="L21">    public PostCheckTurn(GameLobby gameLobby){</span>
+<span class="fc" id="L22">        this.gameLobby = gameLobby;</span>
+<span class="fc" id="L23">        LOG.config(&quot;PostCheckTurn has been initialized&quot;);</span>
+<span class="fc" id="L24">    }</span>
+
+   @Override
+    public Object handle(Request request, Response response){
+<span class="fc" id="L28">        LOG.config(&quot;CheckTurn was Invoked&quot;);</span>
+<span class="fc" id="L29">        Session httpSession = request.session();</span>
+<span class="fc" id="L30">        Player currentPlayer = httpSession.attribute(CURRENT_USER_ATTR);</span>
+<span class="fc" id="L31">        PlayerColor currentColor = currentPlayer.getColor();</span>
+<span class="fc" id="L32">        Game currentGame = gameLobby.getGame(currentPlayer.getGameID());</span>
+        //Player opponent = currentGame.getOpponent(currentPlayer);
+<span class="fc" id="L34">        boolean isPlaying = currentGame.isCurrentPlayer(currentPlayer);</span>
+
+        Message message;
+<span class="fc" id="L37">        Game.Win winner = currentGame.getWinner();</span>
+<span class="fc bfc" id="L38" title="All 2 branches covered.">        if (winner == Game.Win.INGAME) {</span>
+<span class="fc" id="L39">            message = new Message(Boolean.toString(isPlaying), Message.Type.INFO);</span>
+        }
+        else {
+<span class="fc bfc" id="L42" title="All 2 branches covered.">            if (winner == currentGame.playerColorToWinColor(currentColor)) {</span>
+<span class="fc" id="L43">                message = new Message(&quot;You win! Please redirect to the home page.&quot;, Message.Type.INFO);</span>
+            }
+            else {
+<span class="fc" id="L46">                message = new Message(&quot;You lose!&quot;, Message.Type.INFO);</span>
+            }
+        }
+
+        String temp;
+<span class="fc" id="L51">        Gson gson = new GsonBuilder().create();</span>
+<span class="fc" id="L52">        temp = gson.toJson(message);</span>
+<span class="fc" id="L53">        return temp;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span>Model Tier</div></body></html>

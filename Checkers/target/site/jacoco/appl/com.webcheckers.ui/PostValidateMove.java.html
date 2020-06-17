@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PostValidateMove.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">WebCheckers Application Tier Test Coverage</a> &gt; <a href="index.source.html" class="el_package">com.webcheckers.ui</a> &gt; <span class="el_source">PostValidateMove.java</span></div><h1>PostValidateMove.java</h1><pre class="source lang-java linenums">package com.webcheckers.ui;
+
+import com.google.gson.Gson;
+import com.webcheckers.model.*;
+import com.webcheckers.application.GameLobby;
+import com.webcheckers.application.Message;
+import spark.*;
+import java.util.logging.Logger;
+
+public class PostValidateMove implements Route {
+
+    // Logger
+<span class="fc" id="L13">    private static final Logger LOG = Logger.getLogger(GetHomeRoute.class.getName());</span>
+
+    // Attributes for PostValidateMove
+    private GameLobby gameLobby;
+    private Gson gson;
+    public static final String MOVE =  &quot;MOVE&quot;;
+
+
+<span class="fc" id="L21">    public PostValidateMove(GameLobby gameLobby, Gson gson) {</span>
+<span class="fc" id="L22">        this.gameLobby = gameLobby;</span>
+<span class="fc" id="L23">        this.gson = gson;</span>
+<span class="fc" id="L24">    }</span>
+
+    @Override
+    public Object handle(Request request, Response response) {
+<span class="fc" id="L28">        LOG.finer(&quot;PostValidateMove is invoked.&quot;);</span>
+
+<span class="fc" id="L30">        String moveMade = request.queryParams(&quot;actionData&quot;);</span>
+<span class="fc" id="L31">        Move move = gson.fromJson(moveMade, Move.class);</span>
+
+<span class="fc" id="L33">        Session httpSession = request.session();</span>
+
+<span class="fc" id="L35">        Player currentPlayer = httpSession.attribute(&quot;currentUser&quot;);</span>
+<span class="fc" id="L36">        String gameId = currentPlayer.getGameID();</span>
+<span class="fc" id="L37">        Game currentGame = gameLobby.getGame(gameId);</span>
+
+        Message message;
+<span class="pc bpc" id="L40" title="1 of 2 branches missed.">        if (currentPlayer.getColor() == PlayerColor.WHITE) {</span>
+<span class="fc" id="L41">            move.flipMove();</span>
+        }
+
+<span class="fc" id="L44">        message = currentGame.validateMove(move);</span>
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">        if (message.getType() == Message.Type.INFO) {</span>
+<span class="fc" id="L46">            currentGame.pushMove(move);</span>
+        }
+        String temp;
+<span class="fc" id="L49">        temp = gson.toJson(message);</span>
+<span class="fc" id="L50">        return temp;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span>Application Tier</div></body></html>

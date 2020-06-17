@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Space.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">WebCheckers Model Tier Test Coverage</a> &gt; <a href="index.source.html" class="el_package">com.webcheckers.model.Board</a> &gt; <span class="el_source">Space.java</span></div><h1>Space.java</h1><pre class="source lang-java linenums">package com.webcheckers.model.Board;
+
+/**
+ * Data structure to represent the spaces in the board.
+ */
+public class Space {
+
+    // The row that this space sits in
+    private int myRow;
+    // The column that this space sits in
+    private int cellIdx;
+    // The piece that is on this space, can be null
+    private Piece myPiece;
+    // The color of that space for testing.
+    private COLOR color;
+
+    // The type of color that spaces can be.
+<span class="fc" id="L18">    public enum COLOR {</span>
+<span class="fc" id="L19">        WHITE, BLACK</span>
+    }
+
+<span class="fc" id="L22">    public Space(int myRow, int cellIdx, COLOR color) {</span>
+<span class="fc" id="L23">        this.myRow = myRow;</span>
+<span class="fc" id="L24">        this.cellIdx = cellIdx;</span>
+<span class="fc" id="L25">        this.color = color;</span>
+<span class="fc" id="L26">    }</span>
+
+<span class="fc" id="L28">    public Space(int myRow, int cellIdx, COLOR color, Piece myPiece) {</span>
+<span class="fc" id="L29">        this.myRow = myRow;</span>
+<span class="fc" id="L30">        this.cellIdx = cellIdx;</span>
+<span class="fc" id="L31">        this.color = color;</span>
+<span class="fc" id="L32">        this.myPiece = myPiece;</span>
+<span class="fc" id="L33">    }</span>
+
+<span class="fc" id="L35">    public Space(Space copySpace) {</span>
+<span class="fc" id="L36">        myRow = copySpace.getMyRow();</span>
+<span class="fc" id="L37">        cellIdx = copySpace.getCellIdx();</span>
+<span class="fc" id="L38">        Piece copyPiece = copySpace.getPiece();</span>
+<span class="fc bfc" id="L39" title="All 2 branches covered.">        if (copyPiece != null) {</span>
+<span class="fc" id="L40">            myPiece = copyPiece.copy();</span>
+        }
+        else {
+<span class="fc" id="L43">            myPiece = null;</span>
+        }
+<span class="fc" id="L45">    }</span>
+
+    /**
+     * Get the row that this space is in.
+     *
+     * @return the row number
+     */
+    public int getMyRow() {
+<span class="fc" id="L53">        return myRow;</span>
+    }
+
+    /**
+     * Get the cell column of this space.
+     *
+     * @return the column as an integer
+     */
+    public int getCellIdx() {
+<span class="fc" id="L62">        return cellIdx;</span>
+    }
+
+    /**
+     * Determines if this space is valid to move to given that there are no jumps possible.
+     *
+     * @return boolean representing if the space is valid to move to
+     */
+    public boolean isValid() {
+<span class="pc bpc" id="L71" title="1 of 2 branches missed.">        if (myPiece == null) {</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">            if (myRow%2 == 0) {</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">                if (cellIdx%2 == 0) {</span>
+<span class="fc" id="L74">                    return false;</span>
+                }
+                else {
+<span class="fc" id="L77">                    return true;</span>
+                }
+            }
+            else {
+<span class="fc bfc" id="L81" title="All 2 branches covered.">                if (cellIdx%2 == 0) {</span>
+<span class="fc" id="L82">                    return true;</span>
+                }
+                else {
+<span class="fc" id="L85">                    return false;</span>
+                }
+            }
+        }
+<span class="nc" id="L89">        return false;</span>
+    }
+
+    /**
+     * If this space does not already have a piece, give it one.
+     *
+     * @param piece the piece being given to the space
+     */
+    public void givePiece(Piece piece) {
+<span class="fc" id="L98">        this.myPiece = piece;</span>
+<span class="fc" id="L99">    }</span>
+
+
+    /**
+     * Get the piece that is currently on this space.
+     *
+     * @return the piece that is on the space currently
+     */
+    public Piece getPiece() {
+<span class="fc" id="L108">        return myPiece;</span>
+    }
+
+    /**
+     * Get the color of this space.
+     *
+     * @return the color of the space
+     */
+    public COLOR getColor() {
+<span class="fc" id="L117">        return color;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span>Model Tier</div></body></html>

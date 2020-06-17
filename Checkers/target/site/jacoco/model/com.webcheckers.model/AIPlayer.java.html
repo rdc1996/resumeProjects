@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AIPlayer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">WebCheckers Model Tier Test Coverage</a> &gt; <a href="index.source.html" class="el_package">com.webcheckers.model</a> &gt; <span class="el_source">AIPlayer.java</span></div><h1>AIPlayer.java</h1><pre class="source lang-java linenums">package com.webcheckers.model;
+
+import java.util.List;
+
+public class AIPlayer extends Player {
+
+    public AIPlayer() {
+<span class="fc" id="L8">        super();</span>
+<span class="fc" id="L9">    }</span>
+
+    /**
+     * Method to make the AI Player take their turn.
+     *
+     * @param currentGame the current game being played
+     */
+    public void turn(Game currentGame) {
+<span class="fc" id="L17">        MoveValidator validator = currentGame.getMoveValidator();</span>
+
+<span class="fc" id="L19">        List&lt;Move&gt; validMoves = currentGame.getValidMoves();</span>
+<span class="pc bpc" id="L20" title="2 of 4 branches missed.">        if (validMoves == null || validMoves.isEmpty()) {</span>
+<span class="nc" id="L21">            currentGame.setGameOver(currentGame.getRedPlayer().getName() + &quot; has blocked all pieces.&quot;);</span>
+<span class="nc" id="L22">            currentGame.setLoser(currentGame.getWhitePlayer());</span>
+<span class="nc" id="L23">            currentGame.setWinner(Game.Win.RED);</span>
+<span class="nc" id="L24">            return;</span>
+        }
+<span class="fc" id="L26">        int randomNumber = (int)(Math.random()*(validMoves.size() - 1));</span>
+
+<span class="pc bpc" id="L28" title="2 of 4 branches missed.">        if (validMoves != null &amp;&amp; !validMoves.isEmpty()) {</span>
+<span class="fc" id="L29">            Move tempMove = validMoves.get(randomNumber);</span>
+<span class="fc" id="L30">            currentGame.pushMove(tempMove);</span>
+<span class="pc bpc" id="L31" title="1 of 2 branches missed.">            if (validator.moveIsJump(tempMove)) {</span>
+<span class="nc" id="L32">                validMoves = currentGame.generateMoreJumpe();</span>
+<span class="nc bnc" id="L33" title="All 2 branches missed.">                while (validMoves != null) {</span>
+<span class="nc" id="L34">                    randomNumber = (int)(Math.random()*(validMoves.size() - 1));</span>
+<span class="nc" id="L35">                    tempMove = validMoves.get(randomNumber);</span>
+<span class="nc" id="L36">                    currentGame.pushMove(tempMove);</span>
+<span class="nc" id="L37">                    validMoves = currentGame.generateMoreJumpe();</span>
+                }
+            }
+        }
+<span class="pc bpc" id="L41" title="1 of 2 branches missed.">        if(currentGame.getSpectators().size() &gt; 0) {</span>
+            try {
+<span class="nc" id="L43">                Thread.sleep(5000);</span>
+<span class="nc" id="L44">            } catch (InterruptedException e) {</span>
+<span class="nc" id="L45">                e.printStackTrace();</span>
+<span class="nc" id="L46">            }</span>
+        }
+<span class="fc" id="L48">        currentGame.submit();</span>
+<span class="fc" id="L49">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span>Model Tier</div></body></html>

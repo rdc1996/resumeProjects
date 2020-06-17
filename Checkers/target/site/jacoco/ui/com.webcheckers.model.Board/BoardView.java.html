@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BoardView.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">WebCheckers UI Tier Test Coverage</a> &gt; <a href="index.source.html" class="el_package">com.webcheckers.model.Board</a> &gt; <span class="el_source">BoardView.java</span></div><h1>BoardView.java</h1><pre class="source lang-java linenums">package com.webcheckers.model.Board;
+
+import com.webcheckers.model.Position;
+import java.util.ArrayList;
+import java.util.Iterator;
+
+/**
+ * The data structure to represent the board
+ */
+public class BoardView implements Iterable{
+
+    // The rows in the board starting from top to bottom
+    private ArrayList&lt;Row&gt; rows;
+
+    // The number of red pieces left on the board.
+    private int redPieces;
+
+    // The number of white pieces left on the board.
+    private int whitePieces;
+
+<span class="fc" id="L21">    public BoardView() {</span>
+<span class="fc" id="L22">        this.rows = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L23">        initBoard();</span>
+<span class="fc" id="L24">        updatePieces();</span>
+<span class="fc" id="L25">    }</span>
+
+<span class="fc" id="L27">    public BoardView(ArrayList&lt;Row&gt; rows) {</span>
+<span class="fc" id="L28">        this.rows = rows;</span>
+<span class="fc" id="L29">    }</span>
+
+<span class="fc" id="L31">    public BoardView(BoardView lastBoard) {</span>
+<span class="fc" id="L32">        rows = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L33" title="All 2 branches covered.">        for (int i = 0; i &lt; 8; i++) {</span>
+<span class="fc" id="L34">            rows.add(new Row(i));</span>
+<span class="fc" id="L35">            Row lastRow = lastBoard.getRow(i);</span>
+<span class="fc" id="L36">            Row newRow = rows.get(i);</span>
+<span class="fc bfc" id="L37" title="All 2 branches covered.">            for (int j = 0; j &lt; 8; j++) {</span>
+<span class="fc" id="L38">                Space lastSpace = lastRow.getSpace(j);</span>
+<span class="fc" id="L39">                Space newSpace = new Space(lastSpace);</span>
+<span class="fc" id="L40">                newRow.addSpace(newSpace);</span>
+            }
+        }
+<span class="fc" id="L43">    }</span>
+
+    /**
+     * Below are going to be all the preset Board views that we use for the demo
+     * Depending on the name of the RedPlayer, a different board view will be used
+     * when we initialize the game.
+     *
+     * Ready-Made-Boards:
+     *      Ending a game
+     *      Multiple Jump Moves
+     *      King'ing a piece
+     *      Normal Board to show AI play
+     */
+<span class="fc" id="L56">    public BoardView(String Demo, int boardPreset) {</span>
+<span class="fc" id="L57">        rows = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        for (int i = 0; i &lt; 8; i++) {</span>
+<span class="fc" id="L59">            Row newRow = new Row(i);</span>
+<span class="fc" id="L60">            rows.add(newRow);</span>
+<span class="fc bfc" id="L61" title="All 2 branches covered.">            for (int j = 0; j &lt; 8; j++) {</span>
+                Space tempSpace;
+<span class="fc bfc" id="L63" title="All 2 branches covered.">                if (i%2 == 0) {</span>
+<span class="fc bfc" id="L64" title="All 2 branches covered.">                    if (j%2 == 0) {</span>
+<span class="fc" id="L65">                        tempSpace = new Space(i, j, Space.COLOR.WHITE);</span>
+                    }
+                    else {
+<span class="fc" id="L68">                        tempSpace = new Space(i, j, Space.COLOR.BLACK);</span>
+                    }
+                }
+                else {
+<span class="fc bfc" id="L72" title="All 2 branches covered.">                    if (j%2 == 0) {</span>
+<span class="fc" id="L73">                        tempSpace = new Space(i, j, Space.COLOR.BLACK);</span>
+                    }
+                    else {
+<span class="fc" id="L76">                        tempSpace = new Space(i,j, Space.COLOR.WHITE);</span>
+                    }
+                }
+                // If username is &quot;1&quot; the board will be set for the final move and win
+<span class="fc bfc" id="L80" title="All 2 branches covered.">                if(boardPreset == 1) {</span>
+<span class="fc bfc" id="L81" title="All 4 branches covered.">                    if (i == 2 &amp;&amp; j == 1) {</span>
+<span class="pc bpc" id="L82" title="1 of 2 branches missed.">                        if (tempSpace.getColor() == Space.COLOR.BLACK) {</span>
+<span class="fc" id="L83">                            tempSpace.givePiece(new Piece(Piece.type.SINGLE, Piece.color.RED));</span>
+                        }
+                    }
+<span class="fc bfc" id="L86" title="All 4 branches covered.">                    if (i == 1 &amp;&amp; j == 2) {</span>
+<span class="pc bpc" id="L87" title="1 of 2 branches missed.">                        if (tempSpace.getColor() == Space.COLOR.BLACK) {</span>
+<span class="fc" id="L88">                            tempSpace.givePiece(new Piece(Piece.type.SINGLE, Piece.color.WHITE));</span>
+                        }
+                    }
+                }
+                // preset for losing, move piece so that White AI can capture
+<span class="fc bfc" id="L93" title="All 2 branches covered.">                else if (boardPreset == 2){</span>
+<span class="fc bfc" id="L94" title="All 4 branches covered.">                    if (i == 5 &amp;&amp; j == 4) {</span>
+<span class="pc bpc" id="L95" title="1 of 2 branches missed.">                        if (tempSpace.getColor() == Space.COLOR.BLACK) {</span>
+<span class="fc" id="L96">                            tempSpace.givePiece(new Piece(Piece.type.SINGLE, Piece.color.RED));</span>
+                        }
+                    }
+<span class="fc bfc" id="L99" title="All 4 branches covered.">                    if (i == 3 &amp;&amp; j == 2) {</span>
+<span class="pc bpc" id="L100" title="1 of 2 branches missed.">                        if (tempSpace.getColor() == Space.COLOR.BLACK) {</span>
+<span class="fc" id="L101">                            tempSpace.givePiece(new Piece(Piece.type.SINGLE, Piece.color.WHITE));</span>
+                        }
+                    }
+                }
+                // multiple jump move board
+<span class="fc bfc" id="L106" title="All 2 branches covered.">                else if(boardPreset == 3){</span>
+<span class="fc bfc" id="L107" title="All 4 branches covered.">                    if (i == 7 &amp;&amp; j == 2) {</span>
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">                        if (tempSpace.getColor() == Space.COLOR.BLACK) {</span>
+<span class="fc" id="L109">                            tempSpace.givePiece(new Piece(Piece.type.SINGLE, Piece.color.RED));</span>
+                        }
+                    }
+<span class="fc bfc" id="L112" title="All 12 branches covered.">                    if (i == 6 &amp;&amp; j == 1 || i == 4 &amp;&amp; j == 1 || i == 2 &amp;&amp; j == 3) {</span>
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">                        if (tempSpace.getColor() == Space.COLOR.BLACK) {</span>
+<span class="fc" id="L114">                            tempSpace.givePiece(new Piece(Piece.type.SINGLE, Piece.color.WHITE));</span>
+                        }
+                    }
+                }
+                // board set for kinging a piece and showing its movement, AI can do it as well
+<span class="pc bpc" id="L119" title="1 of 2 branches missed.">                else if(boardPreset == 4){</span>
+<span class="fc bfc" id="L120" title="All 4 branches covered.">                    if (i == 1 &amp;&amp; j == 2) {</span>
+<span class="pc bpc" id="L121" title="1 of 2 branches missed.">                        if (tempSpace.getColor() == Space.COLOR.BLACK) {</span>
+<span class="fc" id="L122">                            tempSpace.givePiece(new Piece(Piece.type.SINGLE, Piece.color.RED));</span>
+                        }
+                    }
+<span class="fc bfc" id="L125" title="All 4 branches covered.">                    if (i == 6 &amp;&amp; j == 5) {</span>
+<span class="pc bpc" id="L126" title="1 of 2 branches missed.">                        if (tempSpace.getColor() == Space.COLOR.BLACK) {</span>
+<span class="fc" id="L127">                            tempSpace.givePiece(new Piece(Piece.type.SINGLE, Piece.color.WHITE));</span>
+                        }
+                    }
+                }
+                // the board will be normal if none of the presets are used
+                else {
+<span class="nc bnc" id="L133" title="All 2 branches missed.">                    if (canHaveStarterPiece(i, j)) {</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">                        if (i &lt; 3) {</span>
+<span class="nc" id="L135">                            tempSpace.givePiece(new Piece(Piece.type.SINGLE, Piece.color.WHITE));</span>
+                        }
+                        else {
+<span class="nc" id="L138">                            tempSpace.givePiece(new Piece(Piece.type.SINGLE, Piece.color.RED));</span>
+                        }
+                    }
+                }
+<span class="fc" id="L142">                newRow.addSpace(tempSpace);</span>
+            }
+        }
+<span class="fc" id="L145">        updatePieces();</span>
+<span class="fc" id="L146">    }</span>
+
+    /**
+     * Update the number of pieces on each team.
+     *
+     * Mainly used for testing but has some other applications.
+     */
+    public void updatePieces() {
+<span class="fc" id="L154">        int tempWhite = 0;</span>
+<span class="fc" id="L155">        int tempRed = 0;</span>
+<span class="fc bfc" id="L156" title="All 2 branches covered.">        for (int i = 0; i &lt; 8; i++) {</span>
+<span class="fc bfc" id="L157" title="All 2 branches covered.">            for (int j = 0; j &lt; 8; j++) {</span>
+<span class="fc" id="L158">                Row tempRow = rows.get(i);</span>
+<span class="fc" id="L159">                Space tempSpace = tempRow.getSpace(j);</span>
+<span class="fc" id="L160">                Piece tempPiece = tempSpace.getPiece();</span>
+<span class="fc bfc" id="L161" title="All 2 branches covered.">                if (tempSpace.getPiece() != null) {</span>
+<span class="fc bfc" id="L162" title="All 2 branches covered.">                    if (tempPiece.getColor() == Piece.color.WHITE) {</span>
+<span class="fc" id="L163">                        tempWhite++;</span>
+                    }
+                    else {
+<span class="fc" id="L166">                        tempRed++;</span>
+                    }
+                }
+            }
+        }
+<span class="fc" id="L171">        whitePieces = tempWhite;</span>
+<span class="fc" id="L172">        redPieces = tempRed;</span>
+<span class="fc" id="L173">    }</span>
+
+    /**
+     * Initialize the Board with the proper spaces and pieces.
+     */
+    public void initBoard() {
+<span class="fc bfc" id="L179" title="All 2 branches covered.">        for (int i = 0; i &lt; 8; i++) {</span>
+<span class="fc" id="L180">            rows.add(new Row(i));</span>
+<span class="fc bfc" id="L181" title="All 2 branches covered.">            for (int j = 0; j &lt; 8; j++) {</span>
+                Space tempSpace;
+<span class="fc bfc" id="L183" title="All 2 branches covered.">                if (i%2 == 0) {</span>
+<span class="fc bfc" id="L184" title="All 2 branches covered.">                    if (j%2 == 0) {</span>
+<span class="fc" id="L185">                        tempSpace = new Space(i, j, Space.COLOR.WHITE);</span>
+                    }
+                    else {
+<span class="fc" id="L188">                        tempSpace = new Space(i, j, Space.COLOR.BLACK);</span>
+                    }
+                }
+                else {
+<span class="fc bfc" id="L192" title="All 2 branches covered.">                    if (j%2 == 0) {</span>
+<span class="fc" id="L193">                        tempSpace = new Space(i, j, Space.COLOR.BLACK);</span>
+                    }
+                    else {
+<span class="fc" id="L196">                        tempSpace = new Space(i,j, Space.COLOR.WHITE);</span>
+                    }
+                }
+<span class="fc" id="L199">                Row currentRow = rows.get(i);</span>
+<span class="fc bfc" id="L200" title="All 2 branches covered.">                if (canHaveStarterPiece(i, j)) {</span>
+<span class="fc bfc" id="L201" title="All 2 branches covered.">                    if (i &lt; 3) {</span>
+<span class="fc" id="L202">                        tempSpace.givePiece(new Piece(Piece.type.SINGLE, Piece.color.WHITE));</span>
+                    }
+                    else {
+<span class="fc" id="L205">                        tempSpace.givePiece(new Piece(Piece.type.SINGLE, Piece.color.RED));</span>
+                    }
+                }
+<span class="fc" id="L208">                currentRow.addSpace(tempSpace);</span>
+            }
+        }
+<span class="fc" id="L211">    }</span>
+
+    /**
+     * Creates the white players view of the board, made for testing.
+     */
+    public void initWhiteBoard() {
+<span class="fc bfc" id="L217" title="All 2 branches covered.">        for (int i = 0; i &lt; 8; i++) {</span>
+<span class="fc" id="L218">            rows.add(new Row(i));</span>
+<span class="fc bfc" id="L219" title="All 2 branches covered.">            for (int j = 0; j &lt; 8; j++) {</span>
+                Space tempSpace;
+<span class="fc bfc" id="L221" title="All 2 branches covered.">                if (i%2 == 0) {</span>
+<span class="fc bfc" id="L222" title="All 2 branches covered.">                    if (j%2 == 0) {</span>
+<span class="fc" id="L223">                        tempSpace = new Space(i, j, Space.COLOR.WHITE);</span>
+                    }
+                    else {
+<span class="fc" id="L226">                        tempSpace = new Space(i, j, Space.COLOR.BLACK);</span>
+                    }
+                }
+                else {
+<span class="fc bfc" id="L230" title="All 2 branches covered.">                    if (j%2 == 0) {</span>
+<span class="fc" id="L231">                        tempSpace = new Space(i, j, Space.COLOR.BLACK);</span>
+                    }
+                    else {
+<span class="fc" id="L234">                        tempSpace = new Space(i,j, Space.COLOR.WHITE);</span>
+                    }
+                }
+<span class="fc" id="L237">                Row currentRow = rows.get(i);</span>
+<span class="fc bfc" id="L238" title="All 2 branches covered.">                if (canHaveStarterPiece(i, j)) {</span>
+<span class="fc bfc" id="L239" title="All 2 branches covered.">                    if (i &lt; 3) {</span>
+<span class="fc" id="L240">                        tempSpace.givePiece(new Piece(Piece.type.SINGLE, Piece.color.RED));</span>
+                    }
+                    else {
+<span class="fc" id="L243">                        tempSpace.givePiece(new Piece(Piece.type.SINGLE, Piece.color.WHITE));</span>
+                    }
+                }
+<span class="fc" id="L246">                currentRow.addSpace(tempSpace);</span>
+            }
+        }
+<span class="fc" id="L249">    }</span>
+
+    /**
+     * Determine if the space at the given coordinates is supposed to have a piece at the start of a game.
+     *
+     * @param row the row of the given piece
+     * @param col the column of the given piece
+     * @return boolean representing if the piece should have a piece
+     */
+    public boolean canHaveStarterPiece(int row, int col) {
+<span class="fc bfc" id="L259" title="All 4 branches covered.">        if (row &lt;= 2 || row &gt;= 5) {</span>
+<span class="fc bfc" id="L260" title="All 2 branches covered.">            if (row%2 == 0) {</span>
+<span class="fc bfc" id="L261" title="All 2 branches covered.">                return (col%2 != 0);</span>
+            }
+            else {
+<span class="fc bfc" id="L264" title="All 2 branches covered.">                return (col%2 == 0);</span>
+            }
+        }
+<span class="fc" id="L267">        return false;</span>
+    }
+
+    /**
+     * Obtain the view for the red player.
+     *
+     * @return the board representing the view for the red player
+     */
+    public BoardView getRedView() {
+<span class="fc" id="L276">        return new BoardView(this.rows);</span>
+    }
+
+    /**
+     * Obtain the view for the white player by getting the inverse of the red player view.
+     *
+     * @return the board representing the view for the white player
+     */
+    public BoardView getWhiteView() {
+<span class="fc" id="L285">        ArrayList&lt;Row&gt; newBoardRows = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L286" title="All 2 branches covered.">        for (int i = 0; i &lt; 8; i++) {</span>
+<span class="fc" id="L287">            Row newRow = new Row(i);</span>
+<span class="fc" id="L288">            newBoardRows.add(newRow);</span>
+<span class="fc" id="L289">            Row oldRow = rows.get(7 - i);</span>
+<span class="fc bfc" id="L290" title="All 2 branches covered.">            for (int j = 0; j &lt; 8; j++) {</span>
+<span class="fc" id="L291">                Space tempSpace = oldRow.duplicateSpace(7 - j);</span>
+<span class="fc" id="L292">                newRow.addSpace(tempSpace);</span>
+            }
+        }
+<span class="fc" id="L295">        return new BoardView(newBoardRows);</span>
+    }
+
+    /**
+     * Gets the row at the specified index.
+     *
+     * @param index the index of the row
+     * @return the row at the given index
+     */
+    public Row getRow(int index) {
+<span class="fc" id="L305">        return rows.get(index);</span>
+    }
+
+    /**
+     * Get the space at the given position.
+     *
+     * @param position the position of the space
+     * @return the space at the position
+     */
+    public Space getSpace(Position position) {
+<span class="fc" id="L315">        int row = position.getRow();</span>
+<span class="fc" id="L316">        int col = position.getCell();</span>
+<span class="fc" id="L317">        return rows.get(row).getSpace(col);</span>
+    }
+
+    /**
+     * Subtract the given number of white pieces from the board.
+     *
+     * @param subtract the number of pieces to remove
+     */
+    public void subtractWhitePieces(int subtract) {
+<span class="fc bfc" id="L326" title="All 2 branches covered.">        if (whitePieces &gt;= subtract) {</span>
+<span class="fc" id="L327">            whitePieces -= subtract;</span>
+        }
+        else {
+<span class="fc" id="L330">            whitePieces = 0;</span>
+        }
+<span class="fc" id="L332">    }</span>
+
+    /**
+     * Subtract the given number of red pieces from the board.
+     *
+     * @param subtract the number of pieces to remove
+     */
+    public void subtractRedPieces(int subtract) {
+<span class="pc bpc" id="L340" title="1 of 2 branches missed.">        if (redPieces &gt;= subtract) {</span>
+<span class="fc" id="L341">            redPieces -= subtract;</span>
+        }
+        else {
+<span class="nc" id="L344">            redPieces = 0;</span>
+
+        }
+<span class="fc" id="L347">    }</span>
+
+    /**
+     * Check if the red player has more than zero pieces.
+     *
+     * @return whether there are red pieces left
+     */
+    public boolean hasRedPiecesLeft() {
+<span class="fc bfc" id="L355" title="All 2 branches covered.">        return redPieces &gt; 0;</span>
+    }
+
+    /**
+     * Check if the white player has more than zero pieces.
+     *
+     * @return whether there are white pieces left
+     */
+    public boolean hasWhitePiecesLeft() {
+<span class="fc bfc" id="L364" title="All 2 branches covered.">        return whitePieces &gt; 0;</span>
+    }
+
+    /**
+     * Iterator the rows in the board.
+     *
+     * @return the iterator
+     */
+    @Override
+    public Iterator&lt;Row&gt; iterator() {
+<span class="fc" id="L374">        return new Iterator&lt;Row&gt;() {</span>
+
+            int current;
+
+            @Override
+            public boolean hasNext() {
+<span class="nc bnc" id="L380" title="All 2 branches missed.">                if (current &lt; rows.size()) {</span>
+<span class="nc" id="L381">                    return true;</span>
+                }
+<span class="nc" id="L383">                return false;</span>
+            }
+
+            @Override
+            public Row next() {
+<span class="nc" id="L388">                Row tempRow = rows.get(current);</span>
+<span class="nc" id="L389">                current++;</span>
+<span class="nc" id="L390">                return tempRow;</span>
+            }
+        };
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span>UI Tier</div></body></html>

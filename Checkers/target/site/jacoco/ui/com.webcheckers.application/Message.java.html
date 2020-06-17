@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Message.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">WebCheckers UI Tier Test Coverage</a> &gt; <a href="index.source.html" class="el_package">com.webcheckers.application</a> &gt; <span class="el_source">Message.java</span></div><h1>Message.java</h1><pre class="source lang-java linenums">package com.webcheckers.application;
+
+import java.util.logging.Logger;
+
+/**
+ * A UI-friendly representation of a message to the user.
+ *
+ * &lt;p&gt;
+ * This is a &lt;a href='https://en.wikipedia.org/wiki/Domain-driven_design'&gt;DDD&lt;/a&gt;
+ * &lt;a href='https://en.wikipedia.org/wiki/Value_object'&gt;Value Object&lt;/a&gt;.
+ * This implementation is immutable and also supports a JSON representation.
+ * &lt;/p&gt;
+ *
+ * @author &lt;a href='mailto:bdbvse@rit.edu'&gt;Bryan Basham&lt;/a&gt;
+ */
+public final class Message {
+<span class="fc" id="L17">  private static final Logger LOG = Logger.getLogger(Message.class.getName());</span>
+
+  //
+  // Static Factory methods
+  //
+
+  /**
+   * A static helper method to create new error messages.
+   *
+   * @param message  the text of the message
+   *
+   * @return a new {@link Message}
+   */
+  public static Message error(final String message) {
+<span class="nc" id="L31">    return new Message(message, Type.ERROR);</span>
+  }
+
+  /**
+   * A static helper method to create new informational messages.
+   *
+   * @param message  the text of the message
+   *
+   * @return a new {@link Message}
+   */
+  public static Message info(final String message) {
+<span class="fc" id="L42">    return new Message(message, Type.INFO);</span>
+  }
+
+  //
+  // Inner Types
+  //
+
+  /**
+   * The type of {@link Message}; either information or an error.
+   */
+<span class="fc" id="L52">  public enum Type {</span>
+<span class="fc" id="L53">    INFO, ERROR</span>
+  }
+
+  //
+  // Attributes
+  //
+
+  private final String text;
+  private final Type type;
+
+  //
+  // Constructor
+  //
+
+  /**
+   * Create a new message.
+   *
+   * @param message  the text of the message
+   * @param type  the type of message
+   */
+<span class="fc" id="L73">  public Message(final String message, final Type type) {</span>
+<span class="fc" id="L74">    this.text = message;</span>
+<span class="fc" id="L75">    this.type = type;</span>
+<span class="fc" id="L76">    LOG.finer(this + &quot; created.&quot;);</span>
+<span class="fc" id="L77">  }</span>
+
+  //
+  // Public methods
+  //
+
+  /**
+   * Get the text of the message.
+   */
+  public String getText() {
+<span class="fc" id="L87">    return text;</span>
+  }
+
+  /**
+   * Get the type of the message.
+   */
+  public Type getType() {
+<span class="fc" id="L94">    return type;</span>
+  }
+
+  /**
+   * Query whether this message was generated from a successful
+   * action; ie, not an {@link Type#ERROR}.
+   *
+   * @return true if not an error
+   */
+  public boolean isSuccessful() {
+<span class="nc bnc" id="L104" title="All 2 branches missed.">    return !type.equals(Type.ERROR);</span>
+  }
+
+  //
+  // Object methods
+  //
+
+  @Override
+  public String toString() {
+<span class="fc" id="L113">    return &quot;{Msg &quot; + type + &quot; '&quot; + text + &quot;'}&quot;;</span>
+  }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span>UI Tier</div></body></html>

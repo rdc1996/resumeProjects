@@ -1,0 +1,13 @@
+mvn compile exec:java // compile and run the maven project
+
+Same localhost:4567 address as your server likely
+
+Join two/three players to a game
+begin playing
+Test each function of the board:
+making moves and such
+backing up moves
+
+
+END SCREEN VIEW HAS NOT BEEN IMPLEMENTED
+  -no win screen

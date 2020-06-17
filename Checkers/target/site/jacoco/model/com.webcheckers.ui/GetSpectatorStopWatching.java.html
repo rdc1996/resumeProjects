@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GetSpectatorStopWatching.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">WebCheckers Model Tier Test Coverage</a> &gt; <a href="index.source.html" class="el_package">com.webcheckers.ui</a> &gt; <span class="el_source">GetSpectatorStopWatching.java</span></div><h1>GetSpectatorStopWatching.java</h1><pre class="source lang-java linenums">package com.webcheckers.ui;
+
+import com.google.gson.Gson;
+import com.webcheckers.application.GameLobby;
+import com.webcheckers.application.Message;
+import com.webcheckers.model.Game;
+import com.webcheckers.model.Player;
+import spark.*;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.logging.Logger;
+
+import static com.webcheckers.ui.GetGameRoute.CURRENT_USER_ATTR;
+
+public class GetSpectatorStopWatching implements Route {
+
+<span class="fc" id="L19">    private static final Logger LOG = Logger.getLogger(GetGameRoute.class.getName());</span>
+    private GameLobby gameLobby;
+    private final TemplateEngine templateEngine;
+
+<span class="fc" id="L23">    public GetSpectatorStopWatching(TemplateEngine templateEngine, GameLobby gameLobby) {</span>
+<span class="fc" id="L24">        this.templateEngine = Objects.requireNonNull(templateEngine, &quot;templateEngine is required&quot;);</span>
+<span class="fc" id="L25">        this.gameLobby = gameLobby;</span>
+<span class="fc" id="L26">        LOG.config(&quot;GetSpectatorStopWatching is initialized.&quot;);</span>
+<span class="fc" id="L27">    }</span>
+
+    @Override
+    public Object handle(Request request, Response response) {
+<span class="fc" id="L31">        Map&lt;String, Object&gt; vm = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L32">        Session httpSession = request.session();</span>
+<span class="fc" id="L33">        Player currentPlayer = httpSession.attribute(CURRENT_USER_ATTR);</span>
+        //set the user to waiting so he is no longer in a game
+<span class="fc" id="L35">        currentPlayer.setCurrentState(Player.currentState.WAITING);</span>
+<span class="fc" id="L36">        vm.put(&quot;title&quot;, &quot;Welcome!&quot;);</span>
+<span class="fc" id="L37">        response.redirect(WebServer.HOME_URL);</span>
+<span class="fc" id="L38">        return templateEngine.render(new ModelAndView(vm, &quot;home.ftl&quot;));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span>Model Tier</div></body></html>

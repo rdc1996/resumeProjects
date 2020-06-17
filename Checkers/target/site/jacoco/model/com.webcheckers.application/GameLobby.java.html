@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GameLobby.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">WebCheckers Model Tier Test Coverage</a> &gt; <a href="index.source.html" class="el_package">com.webcheckers.application</a> &gt; <span class="el_source">GameLobby.java</span></div><h1>GameLobby.java</h1><pre class="source lang-java linenums">package com.webcheckers.application;
+
+import com.webcheckers.model.Game;
+import com.webcheckers.model.Player;
+import java.util.HashMap;
+
+public class GameLobby {
+
+    // The map of games currently in progress.
+    private HashMap&lt;String, Game&gt; games;
+
+<span class="fc" id="L12">    public GameLobby() {</span>
+<span class="fc" id="L13">        games = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L14">    }</span>
+
+    /**
+     * Create a new game with the given players and add them to the map.
+     *
+     * @param redPlayer   the red player in the game
+     * @param whitePlayer the white player in the game
+     */
+    public void addNewGame(Player redPlayer, Player whitePlayer) {
+<span class="fc" id="L23">        Game tempGame = new Game(redPlayer, whitePlayer);</span>
+<span class="fc" id="L24">        games.put(redPlayer.getName(), tempGame);</span>
+<span class="fc" id="L25">        redPlayer.setGameID(redPlayer.getName());</span>
+<span class="fc" id="L26">        whitePlayer.setGameID(redPlayer.getName());</span>
+<span class="fc" id="L27">    }</span>
+
+    /**
+     * Create a new game with the given redPlayer and botPlayer.
+     *
+     * @param redPlayer the human playing
+     * @param botPlayer the bot playing
+     */
+    public void addNewBotGame(Player redPlayer, Player botPlayer) {
+<span class="fc" id="L36">        Game tempGame = new Game(redPlayer, botPlayer);</span>
+<span class="fc" id="L37">        games.put(redPlayer.getName(), tempGame);</span>
+<span class="fc" id="L38">        redPlayer.setGameID(redPlayer.getName());</span>
+<span class="fc" id="L39">    }</span>
+
+    public void addSpectator(Player redPlayer, Player spectator) {
+<span class="nc" id="L42">        Game game = getGame(redPlayer.getName());</span>
+<span class="nc" id="L43">        spectator.setRedPlayer(redPlayer);</span>
+<span class="nc" id="L44">        game.addSpectator(spectator);</span>
+<span class="nc" id="L45">        spectator.setGameID(spectator.getName());</span>
+<span class="nc" id="L46">    }</span>
+
+    /**
+     * Get the game with the given key.
+     *
+     * @param name the key of the game being gotten
+     * @return the game with the given key
+     */
+    public Game getGame(String name) {
+<span class="fc" id="L55">        return games.get(name);</span>
+    }
+
+    /**
+     * End the game.
+     *
+     * @param game the game that is ending
+     * @param reason the reason the game has ended
+     */
+    public void gameOver(Game game, String reason) {
+<span class="fc" id="L65">        String gameID = game.getRedPlayer().getGameID();</span>
+<span class="fc" id="L66">        game.endGame(reason);</span>
+<span class="fc" id="L67">        games.remove(gameID);</span>
+<span class="fc" id="L68">    }</span>
+
+    /**
+     * Method that handles what happens when a player resigns from a game.
+     *
+     * @param game the game that has been resigned
+     * @param loser the person resigning from the game
+     */
+    public void resigned(Game game, Player loser) {
+<span class="fc" id="L77">        game.resigned(loser);</span>
+<span class="fc" id="L78">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span>Model Tier</div></body></html>

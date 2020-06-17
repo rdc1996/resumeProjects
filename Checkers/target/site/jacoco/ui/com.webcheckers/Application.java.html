@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Application.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">WebCheckers UI Tier Test Coverage</a> &gt; <a href="index.source.html" class="el_package">com.webcheckers</a> &gt; <span class="el_source">Application.java</span></div><h1>Application.java</h1><pre class="source lang-java linenums">package com.webcheckers;
+
+import java.io.InputStream;
+import java.util.Objects;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
+
+import com.google.gson.Gson;
+import com.webcheckers.application.GameLobby;
+import com.webcheckers.application.PlayerLobby;
+import com.webcheckers.model.AIPlayer;
+import com.webcheckers.model.Player;
+import com.webcheckers.model.PlayerColor;
+import com.webcheckers.ui.WebServer;
+
+import spark.TemplateEngine;
+import spark.template.freemarker.FreeMarkerEngine;
+
+
+/**
+ * The entry point for the WebCheckers web application.
+ *
+ * @author &lt;a href='mailto:bdbvse@rit.edu'&gt;Bryan Basham&lt;/a&gt;
+ */
+public final class Application {
+<span class="nc" id="L26">  private static final Logger LOG = Logger.getLogger(Application.class.getName());</span>
+
+  /**
+   * Queries whether the application is being run in demo-mode.
+   *
+   * &lt;p&gt;
+   *   This method uses the memoization idiom so the calculation of
+   *   this value is only done once.
+   * @see &lt;a href=&quot;https://en.wikipedia.org/wiki/Memoization&quot;&gt;Memoization (wikipedia)&lt;/a&gt;
+   * &lt;/p&gt;
+   *
+   * @return true if 'demoMode' property is equal to 'true'; false if the
+   * property isn't set or is not 'true'
+   */
+  public static boolean isInDemoMode() {
+<span class="nc bnc" id="L41" title="All 2 branches missed.">    if (inDemoMode == null) {</span>
+<span class="nc" id="L42">      inDemoMode = _isInDemoMode();</span>
+    }
+<span class="nc" id="L44">    return inDemoMode;</span>
+  }
+  private static final String DEMO_MODE_PROPERTY = &quot;demoMode&quot;;
+<span class="nc" id="L47">  private static Boolean inDemoMode = null;</span>
+
+  /**
+   * The explicit, private property lookup method.
+   */
+  private static boolean _isInDemoMode() {
+<span class="nc" id="L53">    final String demoModeStr = System.getProperty(DEMO_MODE_PROPERTY);</span>
+<span class="nc bnc" id="L54" title="All 2 branches missed.">    if (demoModeStr == null) {</span>
+<span class="nc" id="L55">      return false;</span>
+    } else {
+      try {
+<span class="nc" id="L58">        return Boolean.parseBoolean(demoModeStr);</span>
+<span class="nc" id="L59">      } catch (Exception e) {</span>
+<span class="nc" id="L60">        LOG.warning(String.format(&quot;Bad '%s' value, '%s'; must be a boolean.&quot;,</span>
+            DEMO_MODE_PROPERTY, demoModeStr));
+<span class="nc" id="L62">        return false;</span>
+      }
+    }
+  }
+
+  //
+  // Application Launch method
+  //
+
+  /**
+   * Entry point for the WebCheckers web application.
+   *
+   * &lt;p&gt;
+   * It wires the application components together.  This is an example
+   * of &lt;a href='https://en.wikipedia.org/wiki/Dependency_injection'&gt;Dependency Injection&lt;/a&gt;
+   * &lt;/p&gt;
+   *
+   * @param args
+   *    Command line arguments; none expected.
+   */
+  public static void main(String[] args) {
+    // initialize Logging
+    try {
+<span class="nc" id="L85">      ClassLoader classLoader = Application.class.getClassLoader();</span>
+<span class="nc" id="L86">      final InputStream logConfig = classLoader.getResourceAsStream(&quot;log.properties&quot;);</span>
+<span class="nc" id="L87">      LogManager.getLogManager().readConfiguration(logConfig);</span>
+<span class="nc" id="L88">    } catch (Exception e) {</span>
+<span class="nc" id="L89">      e.printStackTrace();</span>
+<span class="nc" id="L90">      System.err.println(&quot;Could not initialize log manager because: &quot; + e.getMessage());</span>
+<span class="nc" id="L91">    }</span>
+
+    // The application uses FreeMarker templates to generate the HTML
+    // responses sent back to the client. This will be the engine processing
+    // the templates and associated data.
+<span class="nc" id="L96">    final TemplateEngine templateEngine = new FreeMarkerEngine();</span>
+
+    // The application uses Gson to generate JSON representations of Java objects.
+    // This should be used by your Ajax Routes to generate JSON for the HTTP
+    // response to Ajax requests.
+<span class="nc" id="L101">    final Gson gson = new Gson();</span>
+
+<span class="nc" id="L103">    final PlayerLobby playerLobby = new PlayerLobby();</span>
+<span class="nc" id="L104">    AIPlayer WhiteBot = new AIPlayer();</span>
+<span class="nc" id="L105">    WhiteBot.setCurrentState(Player.currentState.WAITING);</span>
+<span class="nc" id="L106">    WhiteBot.setColor(PlayerColor.WHITE);</span>
+<span class="nc" id="L107">    playerLobby.addPlayer(WhiteBot);</span>
+
+<span class="nc" id="L109">    final GameLobby gameLobby = new GameLobby();</span>
+
+    // inject the game center and freemarker engine into web server
+<span class="nc" id="L112">    final WebServer webServer = new WebServer(templateEngine, gson, playerLobby, gameLobby);</span>
+
+    // inject web server into application
+<span class="nc" id="L115">    final Application app = new Application(webServer);</span>
+
+    // start the application up
+<span class="nc" id="L118">    app.initialize();</span>
+<span class="nc" id="L119">  }</span>
+
+  //
+  // Attributes
+  //
+
+  private final WebServer webServer;
+
+  //
+  // Constructor
+  //
+
+<span class="nc" id="L131">  private Application(final WebServer webServer) {</span>
+    // validation
+<span class="nc" id="L133">    Objects.requireNonNull(webServer, &quot;webServer must not be null&quot;);</span>
+    //
+<span class="nc" id="L135">    this.webServer = webServer;</span>
+<span class="nc" id="L136">  }</span>
+
+  //
+  // Private methods
+  //
+
+  private void initialize() {
+<span class="nc" id="L143">    LOG.config(&quot;WebCheckers is initializing.&quot;);</span>
+
+    // configure Spark and startup the Jetty web server
+<span class="nc" id="L146">    webServer.initialize();</span>
+
+    // other applications might have additional services to configure
+
+<span class="nc" id="L150">    LOG.config(&quot;WebCheckers initialization complete.&quot;);</span>
+<span class="nc" id="L151">  }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span>UI Tier</div></body></html>

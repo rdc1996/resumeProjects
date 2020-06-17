@@ -1,0 +1,421 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Game.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">WebCheckers Application Tier Test Coverage</a> &gt; <a href="index.source.html" class="el_package">com.webcheckers.model</a> &gt; <span class="el_source">Game.java</span></div><h1>Game.java</h1><pre class="source lang-java linenums">package com.webcheckers.model;
+
+import com.webcheckers.model.Board.BoardView;
+import com.webcheckers.application.Message;
+import com.webcheckers.model.Board.Space;
+
+import java.util.*;
+
+public class Game {
+
+<span class="fc" id="L11">    public enum Win {</span>
+<span class="fc" id="L12">        RED, WHITE, INGAME</span>
+    }
+
+    // The loser of the game.
+    private Player loser;
+
+    // The red player in the game.
+    private Player redPlayer;
+
+    // The white player in the game.
+    private Player whitePlayer;
+
+    // List of spectators to the game
+<span class="fc" id="L25">    private ArrayList&lt;Player&gt; spectators = new ArrayList&lt;Player&gt;();</span>
+
+    // The board for the game.
+    private BoardView board;
+
+    // The player color whose turn it currently is.
+    private PlayerColor activeColor;
+
+    // The moveValidator that creates all of the moves.
+    private MoveValidator moveValidator;
+
+    // The winner of the game.
+    private Win winner;
+
+    // The stack of moves for the current turn.
+<span class="fc" id="L40">    private Deque&lt;Move&gt; moves = new LinkedList&lt;&gt;();</span>
+
+    // The moves that can be done by the player.
+<span class="fc" id="L43">    private List&lt;Move&gt; validMoves = new ArrayList&lt;&gt;();</span>
+
+    // String holding why the game was ended.
+    private String gameOver;
+
+
+<span class="fc" id="L49">    public Game(Player redPlayer, Player whitePlayer) {</span>
+<span class="fc" id="L50">        this.redPlayer = redPlayer;</span>
+<span class="fc" id="L51">        this.whitePlayer = whitePlayer;</span>
+        try {
+<span class="nc" id="L53">            board = new BoardView(&quot;demo&quot;, Integer.parseInt(redPlayer.getName()));</span>
+<span class="fc" id="L54">        } catch(NumberFormatException e){</span>
+<span class="fc" id="L55">            board = new BoardView();</span>
+<span class="nc" id="L56">        }</span>
+
+<span class="fc" id="L58">        activeColor = PlayerColor.RED;</span>
+<span class="fc" id="L59">        moveValidator = new MoveValidator(board);</span>
+<span class="fc" id="L60">        this.winner = Win.INGAME;</span>
+<span class="fc" id="L61">    }</span>
+
+<span class="fc" id="L63">    public Game(Player redPlayer, Player whitePlayer, BoardView board) {</span>
+<span class="fc" id="L64">        this.redPlayer = redPlayer;</span>
+<span class="fc" id="L65">        this.whitePlayer = whitePlayer;</span>
+<span class="fc" id="L66">        this.board = board;</span>
+<span class="fc" id="L67">        activeColor = PlayerColor.RED;</span>
+<span class="fc" id="L68">        moveValidator = new MoveValidator(board);</span>
+<span class="fc" id="L69">        this.winner = Win.INGAME;</span>
+<span class="fc" id="L70">    }</span>
+
+    public void setRedPiecesZero() {
+<span class="fc" id="L73">        board.subtractRedPieces(12);</span>
+<span class="fc" id="L74">    }</span>
+
+    public void setWhitePiecesZero() {
+<span class="fc" id="L77">        board.subtractWhitePieces(12);</span>
+<span class="fc" id="L78">    }</span>
+
+    /**
+     * Get the red player in the game.
+     *
+     * @return The red player
+     */
+    public Player getRedPlayer() {
+<span class="fc" id="L86">        return redPlayer;</span>
+    }
+
+    /**
+     * Get the white player in the game.
+     *
+     * @return The white player
+     */
+    public Player getWhitePlayer() {
+<span class="fc" id="L95">        return whitePlayer;</span>
+    }
+
+    /**
+     * Get the spectators in the game.
+     *
+     * @return List of spectators
+     */
+    public ArrayList&lt;Player&gt; getSpectators() {
+<span class="fc" id="L104">        return spectators;</span>
+    }
+
+    /**
+     * Set the red player to be the given player.
+     *
+     * @param redPlayer the player to be set as the red player
+     */
+    public void setRedPlayer(Player redPlayer) {
+<span class="fc" id="L113">        this.redPlayer = redPlayer;</span>
+<span class="fc" id="L114">    }</span>
+
+    /**
+     * Set the white player to be the given player.
+     *
+     * @param whitePlayer the player to be set as the white player
+     */
+    public void setWhitePlayer(Player whitePlayer) {
+<span class="fc" id="L122">        this.whitePlayer = whitePlayer;</span>
+<span class="fc" id="L123">    }</span>
+
+    /**
+     * Add spectators in the game.
+     *
+     * @param spectator a spectator player
+     */
+    public void addSpectator(Player spectator) {
+<span class="nc" id="L131">        this.spectators.add(spectator);</span>
+<span class="nc" id="L132">    }</span>
+
+    /**
+     * Get the board.
+     *
+     * @return the board
+     */
+    public BoardView getBoard() {
+<span class="fc" id="L140">        return board;</span>
+    }
+
+    /**
+     * Get the current active color.
+     *
+     * @return the active color
+     */
+    public PlayerColor getActiveColor() {
+<span class="fc" id="L149">        return activeColor;</span>
+    }
+
+    /**
+     * Push a move onto the end of the queue.
+     *
+     * @param move the move being pushed
+     */
+    public void pushMove(Move move) {
+<span class="pc bpc" id="L158" title="1 of 4 branches missed.">        if (activeColor == PlayerColor.WHITE &amp;&amp; !whitePlayer.getName().equals(&quot;WhiteBot&quot;)) {</span>
+<span class="nc" id="L159">            move.flipMove();</span>
+        }
+<span class="fc" id="L161">        moves.offerLast(move);</span>
+<span class="fc" id="L162">    }</span>
+
+    /**
+     * Removes a move from the queue
+     *
+     * @return returns false if there is nothing to pop off, true if it was successful
+     */
+    public boolean removeMove(){
+<span class="fc bfc" id="L170" title="All 2 branches covered.">        if(moves.size()==0){</span>
+<span class="fc" id="L171">            return false;</span>
+        } else {
+<span class="fc" id="L173">            moves.removeLast();</span>
+<span class="fc" id="L174">            return true;</span>
+        }
+    }
+
+    /**
+     * Set the active color and switch it in the move moveValidator.
+     *
+     * @return the active color
+     */
+    public void switchActiveColor() {
+<span class="fc bfc" id="L184" title="All 2 branches covered.">        if (this.activeColor == PlayerColor.RED) {</span>
+<span class="fc" id="L185">            activeColor = PlayerColor.WHITE;</span>
+        }
+        else {
+<span class="fc" id="L188">            activeColor = PlayerColor.RED;</span>
+        }
+<span class="fc" id="L190">        moveValidator.swtichActiveColor();</span>
+<span class="fc bfc" id="L191" title="All 2 branches covered.">        if (isBotPlayerTurn()) {</span>
+<span class="fc" id="L192">            AIPlayer currentBot = (AIPlayer)whitePlayer;</span>
+<span class="pc bpc" id="L193" title="1 of 2 branches missed.">            if (board.hasWhitePiecesLeft()) {</span>
+<span class="fc" id="L194">                currentBot.turn(this);</span>
+            }
+        }
+<span class="fc" id="L197">    }</span>
+
+    /**
+     * Checks to see if it is the Bot's turn.
+     *
+     * @return true if it is the Bot's turn
+     */
+    public boolean isBotPlayerTurn() {
+<span class="fc bfc" id="L205" title="All 4 branches covered.">        if (whitePlayer.getName().equals(&quot;WhiteBot&quot;) &amp;&amp; activeColor == PlayerColor.WHITE) {</span>
+<span class="fc" id="L206">            return true;</span>
+        }
+<span class="fc" id="L208">        return false;</span>
+    }
+
+    /**
+     * Get the winner of the game.
+     *
+     * @return the winner
+     */
+    public Win getWinner() {
+<span class="fc" id="L217">        return winner;</span>
+    }
+
+    /**
+     * Set the winner of the game.
+     *
+     * @param winner the winner
+     */
+    public void setWinner(Win winner) {
+<span class="fc" id="L226">        this.winner = winner;</span>
+<span class="fc" id="L227">    }</span>
+
+    /**
+     * Get the opponent of the current player.
+     *
+     * @param player the current player
+     * @return the opponent
+     */
+    public Player getOpponent(Player player) {
+<span class="fc bfc" id="L236" title="All 2 branches covered.">        if (player == redPlayer) {</span>
+<span class="fc" id="L237">            return whitePlayer;</span>
+        }
+        else {
+<span class="fc" id="L240">            return redPlayer;</span>
+        }
+    }
+
+    /**
+     * Checks all the pending moves and validates the latest one.
+     *
+     * @param move the move being validated
+     * @return a message of whether the move has been approved
+     */
+    public Message validateMove(Move move) {
+<span class="fc" id="L251">        validMoves = moveValidator.generateAllMoves();</span>
+<span class="fc" id="L252">        BoardView tempBoard = new BoardView(board);</span>
+<span class="pc bpc" id="L253" title="1 of 2 branches missed.">        for (Move m: moves) {</span>
+<span class="nc" id="L254">            moveValidator.makeMove(m,tempBoard);</span>
+<span class="nc" id="L255">        }</span>
+<span class="fc" id="L256">        return moveValidator.checkMove(move, tempBoard);</span>
+    }
+
+    /**
+     * Convert the given player color to a win color.
+     *
+     * @param color the player's color
+     * @return the equivalent win color
+     */
+    public Game.Win playerColorToWinColor(PlayerColor color) {
+<span class="fc bfc" id="L266" title="All 2 branches covered.">        if (color == PlayerColor.RED) {</span>
+<span class="fc" id="L267">            return Win.RED;</span>
+        }
+        else {
+<span class="fc" id="L270">            return Win.WHITE;</span>
+        }
+    }
+
+    /**
+     * Handles what happens when a player resigns.
+     *
+     * @param loser the loser of the game
+     */
+    public void resigned(Player loser) {
+<span class="fc" id="L280">        Player winner = getOpponent(loser);</span>
+<span class="fc" id="L281">        loser.setCurrentState(Player.currentState.WAITING);</span>
+<span class="fc bfc" id="L282" title="All 2 branches covered.">        if (winner == whitePlayer) {</span>
+<span class="fc" id="L283">            this.winner = Win.WHITE;</span>
+<span class="fc" id="L284">            setLoser(redPlayer);</span>
+        }
+        else {
+<span class="fc" id="L287">            this.winner = Win.RED;</span>
+<span class="fc" id="L288">            setLoser(whitePlayer);</span>
+        }
+<span class="fc" id="L290">        setGameOver(loser.getName() + &quot; has resigned from the game.&quot;);</span>
+<span class="fc" id="L291">        switchActiveColor();</span>
+<span class="fc" id="L292">    }</span>
+
+    /**
+     * Checks if the current player is the active player.
+     *
+     * @param player the current player
+     * @return boolean if they are equivalent
+     */
+    public boolean isCurrentPlayer(Player player) {
+<span class="fc bfc" id="L301" title="All 2 branches covered.">        return (player.getColor() == activeColor);</span>
+    }
+
+    /**
+     * Handles what happens when a move gets submitted.
+     *
+     * @return a message saying if the moves were successfully submitted
+     */
+    public Message submit() {
+<span class="pc bpc" id="L310" title="1 of 2 branches missed.">        if (moveValidator.hasAnotherJump(moves, board)) {</span>
+<span class="nc" id="L311">            return new Message(&quot;Can't end turn when there is still a jump available&quot;, Message.Type.ERROR);</span>
+        }
+<span class="pc bpc" id="L313" title="1 of 2 branches missed.">        if (moves != null) {</span>
+<span class="fc bfc" id="L314" title="All 2 branches covered.">            while (!moves.isEmpty()) {</span>
+<span class="fc" id="L315">                Move currentMove = moves.pop();</span>
+<span class="pc bpc" id="L316" title="1 of 4 branches missed.">                if (activeColor == PlayerColor.WHITE &amp;&amp; !whitePlayer.getName().equals(&quot;WhiteBot&quot;)) {</span>
+<span class="nc" id="L317">                    currentMove.flipMove();</span>
+                }
+<span class="fc" id="L319">                moveValidator.makeMove(currentMove, board);</span>
+<span class="fc" id="L320">            }</span>
+        }
+<span class="fc" id="L322">        switchActiveColor();</span>
+<span class="fc" id="L323">        return new Message(&quot;Moves have successfully been submitted.&quot;, Message.Type.INFO);</span>
+    }
+
+    /**
+     * Get all of the valid moves that the Bot can make.
+     *
+     * @return the list of moves that the Bot can make
+     */
+    public List&lt;Move&gt; getValidMoves() {
+<span class="fc" id="L332">        validMoves = moveValidator.generateAllMoves();</span>
+<span class="pc bpc" id="L333" title="2 of 4 branches missed.">        if (validMoves == null || validMoves.isEmpty()) {</span>
+<span class="nc" id="L334">            return null;</span>
+        }
+<span class="fc" id="L336">        return validMoves;</span>
+    }
+
+    /**
+     * Get the move validator.
+     *
+     * @return the move validator for the game
+     */
+    public MoveValidator getMoveValidator() {
+<span class="fc" id="L345">        return moveValidator;</span>
+    }
+
+    /**
+     * Generate more jumps after all of the moves have been applied.
+     *
+     * @return the new list of moves
+     */
+    public List&lt;Move&gt; generateMoreJumpe() {
+<span class="fc" id="L354">        BoardView tempBoard = new BoardView(board);</span>
+<span class="fc bfc" id="L355" title="All 2 branches covered.">        for (Move m: moves) {</span>
+<span class="fc" id="L356">            moveValidator.makeMove(m,tempBoard);</span>
+<span class="fc" id="L357">        }</span>
+<span class="fc" id="L358">        Move lastMove = moves.peekLast();</span>
+<span class="fc" id="L359">        Position endPosition = lastMove.getEnd();</span>
+<span class="fc" id="L360">        Space endSpace = tempBoard.getSpace(endPosition);</span>
+        List&lt;Move&gt; newJumpMoves;
+<span class="fc" id="L362">        newJumpMoves = moveValidator.generateJumpMovesOnSpace(endSpace, tempBoard);</span>
+<span class="pc bpc" id="L363" title="1 of 4 branches missed.">        if (newJumpMoves != null &amp;&amp; !newJumpMoves.isEmpty()) {</span>
+<span class="fc" id="L364">            return newJumpMoves;</span>
+        }
+<span class="fc" id="L366">        return null;</span>
+    }
+
+    /**
+     * Set the loser of the game.
+     *
+     * @param player the loser of the game
+     */
+    public void setLoser(Player player) {
+<span class="fc" id="L375">        this.loser = player;</span>
+<span class="fc" id="L376">    }</span>
+
+    /**
+     * Get the loser of the game.
+     *
+     * @return the loser of the game
+     */
+    public Player getLoser() {
+<span class="fc" id="L384">        return loser;</span>
+    }
+
+    /**
+     * Set the game over string for the game.
+     *
+     * @param gameOver the string to be shown in the game view
+     */
+    public void setGameOver(String gameOver) {
+<span class="fc" id="L393">        this.gameOver = gameOver;</span>
+<span class="fc" id="L394">    }</span>
+
+    /**
+     * Get the game over string for the game.
+     *
+     * @return the game over string to be shown in the game view
+     */
+    public String getGameOver() {
+<span class="fc" id="L402">        return gameOver;</span>
+    }
+
+    /**
+     * End the current game.
+     *
+     * @param reason the reason that the game is ending
+     */
+    public void endGame(String reason) {
+<span class="fc" id="L411">        setGameOver(reason);</span>
+<span class="fc" id="L412">        redPlayer.setGameID(null);</span>
+<span class="fc" id="L413">        whitePlayer.setGameID(null);</span>
+<span class="fc" id="L414">        redPlayer.setColor(null);</span>
+<span class="fc" id="L415">        whitePlayer.setColor(null);</span>
+<span class="fc" id="L416">        redPlayer.setCurrentState(Player.currentState.WAITING);</span>
+<span class="fc" id="L417">        whitePlayer.setCurrentState(Player.currentState.WAITING);</span>
+<span class="fc" id="L418">        winner = null;</span>
+<span class="fc" id="L419">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.2.201808211720</span>Application Tier</div></body></html>
