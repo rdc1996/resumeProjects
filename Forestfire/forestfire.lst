@@ -1,0 +1,1079 @@
+   1 0000               # File:         $Id$
+   2 0000               # Author:       R. Carnation
+   3 0000               # Description:  This program runs the Forest-Fire model with some modifications
+   4 0000               #               that eliminate some of the randomness. This is a simple 
+   5 0000               #               two-dimensional cellular automaton where each cell exists in 
+   6 0000               #               one of three states: empty (grass), occupied (tree), or 
+   7 0000               #               burning. The game progresses one generation at a time where 
+   8 0000               #               the state of the grid from the previous generation is queried,
+   9 0000               #               and based on the state of the cells there, the grid for the 
+  10 0000               #               new generation will be constructed.
+  11 0000               #
+  12 0000               # Purpose:      To implement the Forest-Fire model with some modifications
+  13 0000               #
+  14 0000               # CONSTANTS
+  15 0000               #
+  16 0000               # syscall codes
+  17 0000               PRINT_INT =     1
+  18 0000               PRINT_STRING =  4
+  19 0000               READ_INT =      5
+  20 0000               READ_STRING =   8
+  21 0000               PRINT_CHARACTER = 11
+  22 0000               
+  23 0000               # various frame sizes used by different routines
+  24 0000               
+  25 0000               FRAMESIZE_8 =   8
+  26 0000               FRAMESIZE_24 =  24
+  27 0000               FRAMESIZE_40 =  40
+  28 0000               FRAMESIZE_48 =  48
+  29 0000               
+  30 0000                       .data
+  31 0000                       .align 2
+  32 0000               
+  33 0000                       #
+  34 0000                       # Constants to be used by the code 
+  35 0000                       #
+  36 0000               wind_north:
+  37 0000 4E      	        .ascii "N"
+  38 0001               wind_east:
+  39 0001 45      	        .ascii "E"
+  40 0002               wind_south:
+  41 0002 53      	        .ascii "S"
+  42 0003               wind_west:
+  43 0003 57      	        .ascii "W"
+  44 0004               burning_tree:
+  45 0004 42      	        .ascii "B"
+  46 0005               tree:
+  47 0005 74      	        .ascii "t"
+  48 0006               grass:
+  49 0006 2E      	        .ascii "."
+  50 0007               fig_char:
+  51 0007 30313233	        .asciiz "0123456789"
+          34353637
+          383900  
+  52 0012               program_banner_1:
+  53 0012 2B2D2D2D	        .asciiz "+-------------+"
+          2D2D2D2D
+          2D2D2D2D
+          2D2D2B00
+  54 0022               program_banner_2:
+  55 0022 7C20464F	        .asciiz "\| FOREST FIRE \|"
+          52455354
+          20464952
+          45207C00
+  56 0032               generation_num_str1:
+  57 0032 3D3D3D3D	        .asciiz "==== \#"
+          202300  
+  58 0039               generation_num_str2:
+  59 0039 203D3D3D	        .asciiz " ===="
+          3D00    
+  60 003f               generation_header_plus:
+  61 003f 2B00    	        .asciiz "+"
+  62 0041               generation_header_dash:
+  63 0041 2D00    	        .asciiz "-"
+  64 0043               generation_sides:
+  65 0043 7C00    	        .asciiz "\|"
+  66 0045               newline:
+  67 0045 0A00    	        .asciiz "\n"
+  68 0047               grid_error:
+  69 0047 4552524F	        .asciiz "ERROR: invalid grid size"
+          523A2069
+          6E76616C
+          69642067
+          72696420
+          73697A65
+  70 0060               gen_error:
+  71 0060 4552524F	        .asciiz "ERROR: invalid number of generations"
+          523A2069
+          6E76616C
+          6964206E
+          756D6265
+          72206F66
+  72 0085               wind_error:
+  73 0085 4552524F	        .asciiz "ERROR: invalid wind direction"
+          523A2069
+          6E76616C
+          69642077
+          696E6420
+          64697265
+  74 00a3               input_error:
+  75 00a3 4552524F	        .asciiz "ERROR: invalid character in grid"
+          523A2069
+          6E76616C
+          69642063
+          68617261
+          63746572
+  76 00c4               
+  77 00c4               
+  78 00c4               #
+  79 00c4               # Name:         MAIN PROGRAM
+  80 00c4               #
+  81 00c4               # Description:  Main logic for the program.
+  82 00c4               #
+  83 00c4               #               The program reads four values from standard input:
+  84 00c4               #               1) An integer representing the grid size
+  85 00c4               #               2) An integer representing the number of generations
+  86 00c4               #               3) A character representing the direction of the wind
+  87 00c4               #               4) A set of strings that represent the state of the grid
+  88 00c4               #
+  89 00c4               #               The program will then run for the number of generations
+  90 00c4               #               specified. Trees will spread their seeds only in the direction
+  91 00c4               #               of the wind as long as the adjacenmt space is grass. Burning
+  92 00c4               #               trees will infect any trees touching them. Grass will remain.
+  93 00c4               #               
+  94 00c4               #
+  95 00c4               
+  96 00c4               old_generation:
+  97 00c4 00000000	        .space 10000        # allocate more than enough space for og gen
+          00000000
+          00000000
+          00000000
+          00000000
+          00000000
+  98 27d4               new_generation:
+  99 27d4 00000000	        .space 10000        # allocate same space for next generation
+          00000000
+          00000000
+          00000000
+          00000000
+          00000000
+ 100 4ee4               
+ 101 0000                       .text                   # this is program code
+ 102 0000                       .align 2                # instructions must be on word boundaries
+ 103 0000               
+ 104 0000               main:
+ 105 0000               
+ 106 0000 23BDFFD0	        addi    $sp, $sp,-FRAMESIZE_48
+ 107 0004 AFBF002C	        sw      $ra, -4+FRAMESIZE_48($sp)
+ 108 0008 AFB70028	        sw      $s7, -8+FRAMESIZE_48($sp)
+ 109 000c AFB60024	        sw      $s6, -12+FRAMESIZE_48($sp)
+ 110 0010 AFB50020	        sw      $s5, -16+FRAMESIZE_48($sp)
+ 111 0014 AFB4001C	        sw      $s4, -20+FRAMESIZE_48($sp)
+ 112 0018 AFB30018	        sw      $s3, -24+FRAMESIZE_48($sp)
+ 113 001c AFB20014	        sw      $s2, -28+FRAMESIZE_48($sp)
+ 114 0020 AFB10010	        sw      $s1, -32+FRAMESIZE_48($sp)
+ 115 0024 AFB0000C	        sw      $s0, -36+FRAMESIZE_48($sp)
+ 116 0028               
+ 117 0028                       #
+ 118 0028                       # Read the grid size into s0
+ 119 0028                       #
+ 120 0028 34020005	        li      $v0, READ_INT
+ 121 002c 0000000C	        syscall
+ 122 0030 00408021	        move    $s0, $v0
+ 123 0034 02009021	        move    $s2, $s0        # copy grid size to s2
+ 124 0038 34010005	        mul     $s4, $s0, 5     # number of chars to read
+     003c 02010018
+     0040 0000A012
+ 125 0044               
+ 126 0044                       #
+ 127 0044                       # Read the num of generations into s1
+ 128 0044                       #
+ 129 0044 34020005	        li      $v0, READ_INT
+ 130 0048 0000000C	        syscall
+ 131 004c 00408821	        move    $s1, $v0
+ 132 0050               
+ 133 0050                       #
+ 134 0050                       # Read the character representing the wind direction
+ 135 0050                       #
+ 136 0050 34020008	        li      $v0, READ_STRING    # read a string
+ 137 0054 3C040000	        la      $a0, fig_char       # place to store the char read in
+     0058 34840000
+ 138 005c 20050009	        addi    $a1, $zero, 9       # the number of characters to read
+ 139 0060 0000000C	        syscall
+ 140 0064               
+ 141 0064                       #
+ 142 0064                       # Read the grid
+ 143 0064                       #
+ 144 0064 3C130000	        la      $s3, old_generation      # load address of buffer -> a0
+     0068 36730000
+ 145 006c               
+ 146 006c               read_grid:
+ 147 006c 12400007	        beq     $s2, $zero, done_reading      # if done reading print header
+ 148 0070               
+ 149 0070 02602021	        move    $a0, $s3                      # where string is stored
+ 150 0074 34020008	        li      $v0, READ_STRING              # read a string
+ 151 0078 00142820	        add     $a1, $zero, $s4               # number of chars to read
+ 152 007c 0000000C	        syscall
+ 153 0080               
+ 154 0080 02709820	        add     $s3, $s3, $s0                 # increment array by grid size
+ 155 0084 2252FFFF	        addi    $s2, $s2, -1                  # decrement grid counter
+ 156 0088 0800001B	        j       read_grid                     # read more input lines
+ 157 008c               
+ 158 008c               done_reading:
+ 159 008c 0C000229	        jal     print_header           # jump to method to print header
+ 160 0090                      
+ 161 0090 02002021	        move    $a0, $s0               # a0 = grid size
+ 162 0094 02202821	        move    $a1, $s1               # a1 = num of generations
+ 163 0098 3C010000	        lbu     $a2, fig_char          # a2 = wind direction
+     009c 90260000
+ 164 00a0 3C070000	        la      $a3, old_generation    # a3 = loaction of old generation
+     00a4 34E70000
+ 165 00a8               
+ 166 00a8 0C0001CF	        jal     error_checking         # jump to error checking
+ 167 00ac               
+ 168 00ac 34100001	        li      $s0, 1                 # load 1 -> s0
+ 169 00b0 12020001	        beq     $s0, $v0, kill_program # kill program if error       
+ 170 00b4               
+ 171 00b4 0C000039	        jal     updating_generations   # print out the generation
+ 172 00b8               
+ 173 00b8               #
+ 174 00b8               # All done -- exit the program!
+ 175 00b8               #
+ 176 00b8               kill_program:
+ 177 00b8 8FBF002C	        lw      $ra, -4+FRAMESIZE_48($sp)
+ 178 00bc 8FB70028	        lw      $s7, -8+FRAMESIZE_48($sp)
+ 179 00c0 8FB60024	        lw      $s6, -12+FRAMESIZE_48($sp)
+ 180 00c4 8FB50020	        lw      $s5, -16+FRAMESIZE_48($sp)
+ 181 00c8 8FB4001C	        lw      $s4, -20+FRAMESIZE_48($sp)
+ 182 00cc 8FB30018	        lw      $s3, -24+FRAMESIZE_48($sp)
+ 183 00d0 8FB20014	        lw      $s2, -28+FRAMESIZE_48($sp)
+ 184 00d4 8FB10010	        lw      $s1, -32+FRAMESIZE_48($sp)
+ 185 00d8 8FB0000C	        lw      $s0, -36+FRAMESIZE_48($sp)
+ 186 00dc 23BD0030	        addi    $sp, $sp, FRAMESIZE_48
+ 187 00e0               
+ 188 00e0 03E00008	        jr      $ra
+ 189 00e4               
+ 190 00e4               #
+ 191 00e4               # Update the current generation
+ 192 00e4               #
+ 193 00e4               updating_generations:
+ 194 00e4               
+ 195 00e4 23BDFFD0	        addi    $sp, $sp,-FRAMESIZE_48
+ 196 00e8 AFBF002C	        sw      $ra, -4+FRAMESIZE_48($sp)
+ 197 00ec AFB70028	        sw      $s7, -8+FRAMESIZE_48($sp)
+ 198 00f0 AFB60024	        sw      $s6, -12+FRAMESIZE_48($sp)
+ 199 00f4 AFB50020	        sw      $s5, -16+FRAMESIZE_48($sp)
+ 200 00f8 AFB4001C	        sw      $s4, -20+FRAMESIZE_48($sp)
+ 201 00fc AFB30018	        sw      $s3, -24+FRAMESIZE_48($sp)
+ 202 0100 AFB20014	        sw      $s2, -28+FRAMESIZE_48($sp)
+ 203 0104 AFB10010	        sw      $s1, -32+FRAMESIZE_48($sp)
+ 204 0108 AFB0000C	        sw      $s0, -36+FRAMESIZE_48($sp)
+ 205 010c                 
+ 206 010c 00808021	        move    $s0, $a0                   # s0 = grid size
+ 207 0110 00A08821	        move    $s1, $a1                   # s1 = gen number
+ 208 0114 00C09021	        move    $s2, $a2                   # s2 = wind direction
+ 209 0118 3C130000	        la      $s3, old_generation        # s3 = old grid array
+     011c 36730000
+ 210 0120 00003820	        add     $a3, $zero, $zero          # a2 = current gen number
+ 211 0124               
+ 212 0124 0C0001AE	        jal     print_gen_number
+ 213 0128 20E70001	        addi    $a3, $a3, 1                # increment gen number
+ 214 012c               
+ 215 012c 02602821	        move    $a1, $s3                   # generation to print -> a1
+ 216 0130 02003021	        move    $a2, $s0                   # move grid size -> a2
+ 217 0134               
+ 218 0134 0C00015C	        jal     print_current_generation
+ 219 0138               
+ 220 0138               generations_loop:
+ 221 0138 1220000D	        beq     $s1, $zero, done_updating_gen  # loop until gen num = 0
+ 222 013c 0C0001AE	        jal     print_gen_number               # print out current number
+ 223 0140               
+ 224 0140 02002021	        move    $a0, $s0                       # grid size -> a0
+ 225 0144 02402821	        move    $a1, $s2                       # wind direction -> a1
+ 226 0148 0C000067	        jal     change_generation_trees        # update all actual trees
+ 227 014c 0C000101	        jal     change_generation_burning      # update burning trees
+ 228 0150               
+ 229 0150 0C0000F3	        jal     swap_generations               # put the new gen in the old spot
+ 230 0154               
+ 231 0154 3C050000	        la      $a1, old_generation            # generation to print -> a1
+     0158 34A50000
+ 232 015c 02003021	        move    $a2, $s0                       # move grid size -> a2
+ 233 0160 0C00015C	        jal     print_current_generation       # print out the current gen
+ 234 0164 2231FFFF	        addi    $s1, $s1, -1                   # decrement gens left
+ 235 0168 20E70001	        addi    $a3, $a3, 1                    # increment gen number
+ 236 016c 0800004E	        j       generations_loop
+ 237 0170               
+ 238 0170               done_updating_gen:
+ 239 0170               
+ 240 0170 8FBF002C	        lw      $ra, -4+FRAMESIZE_48($sp)
+ 241 0174 8FB70028	        lw      $s7, -8+FRAMESIZE_48($sp)
+ 242 0178 8FB60024	        lw      $s6, -12+FRAMESIZE_48($sp)
+ 243 017c 8FB50020	        lw      $s5, -16+FRAMESIZE_48($sp)
+ 244 0180 8FB4001C	        lw      $s4, -20+FRAMESIZE_48($sp)
+ 245 0184 8FB30018	        lw      $s3, -24+FRAMESIZE_48($sp)
+ 246 0188 8FB20014	        lw      $s2, -28+FRAMESIZE_48($sp)
+ 247 018c 8FB10010	        lw      $s1, -32+FRAMESIZE_48($sp)
+ 248 0190 8FB0000C	        lw      $s0, -36+FRAMESIZE_48($sp)
+ 249 0194 23BD0030	        addi    $sp, $sp, FRAMESIZE_48
+ 250 0198               
+ 251 0198 03E00008	        jr      $ra
+ 252 019c               #
+ 253 019c               # Takes the old generation and makes the changes then moves it back to the
+ 254 019c               # old generation spot in memory
+ 255 019c               #
+ 256 019c               # grid size -> a0
+ 257 019c               # wind direction -> a1
+ 258 019c               #
+ 259 019c               change_generation_trees:
+ 260 019c 23BDFFD0	        addi    $sp, $sp,-FRAMESIZE_48
+ 261 01a0 AFBF002C	        sw      $ra, -4+FRAMESIZE_48($sp)
+ 262 01a4 AFB70028	        sw      $s7, -8+FRAMESIZE_48($sp)
+ 263 01a8 AFB60024	        sw      $s6, -12+FRAMESIZE_48($sp)
+ 264 01ac AFB50020	        sw      $s5, -16+FRAMESIZE_48($sp)
+ 265 01b0 AFB4001C	        sw      $s4, -20+FRAMESIZE_48($sp)
+ 266 01b4 AFB30018	        sw      $s3, -24+FRAMESIZE_48($sp)
+ 267 01b8 AFB20014	        sw      $s2, -28+FRAMESIZE_48($sp)
+ 268 01bc AFB10010	        sw      $s1, -32+FRAMESIZE_48($sp)
+ 269 01c0 AFB0000C	        sw      $s0, -36+FRAMESIZE_48($sp)
+ 270 01c4               
+ 271 01c4 3C100000	        la      $s0, old_generation            # load the old gen ->s0
+     01c8 36100000
+ 272 01cc 3C110000	        la      $s1, old_generation            # load the old gen ->s1
+     01d0 36310000
+ 273 01d4 3C120000	        la      $s2, new_generation            # load address for new gen ->s2
+     01d8 36520000
+ 274 01dc 00840018	        mul     $s3, $a0, $a0                  # grid counter
+     01e0 00009812
+ 275 01e4 3C010000	        lbu     $t0, burning_tree              # t0 = (B)
+     01e8 90280000
+ 276 01ec 3C010000	        lbu     $t1, tree                      # t1 = (t)
+     01f0 90290000
+ 277 01f4 3C010000	        lbu     $t2, grass                     # t2 = (.)
+     01f8 902A0000
+ 278 01fc               
+ 279 01fc 3C010000	        lbu     $s4, wind_north                # check if wind is north
+     0200 90340000
+ 280 0204 10B40009	        beq     $a1, $s4, wind_is_north
+ 281 0208               
+ 282 0208 3C010000	        lbu     $s4, wind_east                 # check if wind is east
+     020c 90340000
+ 283 0210 10B4001D	        beq     $a1, $s4, wind_is_east
+ 284 0214               
+ 285 0214 3C010000	        lbu     $s4, wind_south                # check if wind is south
+     0218 90340000
+ 286 021c 10B40033	        beq     $a1, $s4, wind_is_south
+ 287 0220               
+ 288 0220 3C010000	        lbu     $s4, wind_west                 # check if wind is west
+     0224 90340000
+ 289 0228 10B40046	        beq     $a1, $s4, wind_is_west
+ 290 022c               
+ 291 022c               wind_is_north:
+ 292 022c 02649822	        sub     $s3, $s3, $a0                  # remove last row of trees
+ 293 0230 02248820	        add     $s1, $s1, $a0                  # s1 = pointer 1 row ahead
+ 294 0234 0080B021	        move    $s6, $a0                       # grid size -> s6
+ 295 0238               loop_north:
+ 296 0238 1260000C	        beq     $s3, $zero, done_north         # if grid counter = 0, done
+ 297 023c 92140000	        lbu     $s4, 0($s0)                    # old gen first -> s4
+ 298 0240 92350000	        lbu     $s5, 0($s1)                    # old gen second -> s5
+ 299 0244 168A0003	        bne     $s4, $t2, skip_location_north  # if not grass, skip
+ 300 0248 16A90002	        bne     $s5, $t1, skip_location_north  # if not also tree, skip
+ 301 024c A2490000	        sb      $t1, 0($s2)                    # store tree in new gen
+ 302 0250 08000096	        j       already_stored_north
+ 303 0254               skip_location_north:
+ 304 0254 A2540000	        sb      $s4, 0($s2)                    # store old symbol in new gen
+ 305 0258               already_stored_north:
+ 306 0258 22100001	        addi    $s0, $s0, 1                    # increment old gen counter 1
+ 307 025c 22310001	        addi    $s1, $s1, 1                    # increment old gen counter 2
+ 308 0260 22520001	        addi    $s2, $s2, 1                    # increment new gen counter
+ 309 0264 2273FFFF	        addi    $s3, $s3, -1                   # decrement grid counter
+ 310 0268 0800008E	        j       loop_north
+ 311 026c               done_north:
+ 312 026c 12C0004C	        beq     $s6, $zero, done_trees         # if grid size = 0, done trees
+ 313 0270 92140000	        lbu     $s4, 0($s0)                    # load byte from old gen
+ 314 0274 A2540000	        sb      $s4, 0($s2)                    # store byte in new gen
+ 315 0278 22100001	        addi    $s0, $s0, 1                    # increment old gen pointer
+ 316 027c 22520001	        addi    $s2, $s2, 1                    # increment new gen pointer
+ 317 0280 22D6FFFF	        addi    $s6, $s6, -1                   # decrement grid counter
+ 318 0284 0800009B	        j       done_north
+ 319 0288               
+ 320 0288               wind_is_east:
+ 321 0288 3C170000	        la      $s7, new_generation            # another pointer -> s7
+     028c 36F70000
+ 322 0290 22310001	        addi    $s1, $s1, 1                    # s1 = next old gen
+ 323 0294 22F70001	        addi    $s7, $s7, 1                    # s7 = next new gen
+ 324 0298               loop_east:
+ 325 0298 12600041	        beq     $s3, $zero, done_trees         # if grid counter = 0, done
+ 326 029c 0264001A	        rem     $s4, $s3, $a0                  # rem counter/grid size = t0
+     02a0 0000A010
+ 327 02a4 34150001	        li      $s5, 1                         # load 1 -> t1
+ 328 02a8 12950009	        beq     $s4, $s5, skip_location_east   # if last col, skip
+ 329 02ac 16800002	        bne     $s4, $zero, not_first_col      # if rem != 0, not first col
+ 330 02b0 92140000	        lbu     $s4, 0($s0)                    # load from old gen curr
+ 331 02b4 A2540000	        sb      $s4, 0($s2)                    # store in new gen
+ 332 02b8               not_first_col:
+ 333 02b8 92140000	        lbu     $s4, 0($s0)                    # old gen curr = s4
+ 334 02bc 92350000	        lbu     $s5, 0($s1)                    # old gen next = s5
+ 335 02c0 16890003	        bne     $s4, $t1, skip_location_east   # if not tree, skip
+ 336 02c4 16AA0002	        bne     $s5, $t2, skip_location_east   # if also not grass, skip
+ 337 02c8 A2E90000	        sb      $t1, 0($s7)                    # store in next new gen spot
+ 338 02cc 080000B5	        j       already_stored_east
+ 339 02d0               skip_location_east:
+ 340 02d0 A2F50000	        sb      $s5, 0($s7)                    # store in next new gen spot
+ 341 02d4               already_stored_east:
+ 342 02d4 22100001	        addi    $s0, $s0, 1                    # increment old gen counter 1
+ 343 02d8 22310001	        addi    $s1, $s1, 1                    # increment old gen counter 2
+ 344 02dc 22520001	        addi    $s2, $s2, 1                    # increment new gen counter 1
+ 345 02e0 22F70001	        addi    $s7, $s7, 1                    # increment new gen counter 2
+ 346 02e4 2273FFFF	        addi    $s3, $s3, -1                   # decrement grid counter
+ 347 02e8 080000A6	        j       loop_east
+ 348 02ec               
+ 349 02ec               wind_is_south:
+ 350 02ec 02649822	        sub     $s3, $s3, $a0                  # remove last row of trees
+ 351 02f0 0080B021	        move    $s6, $a0                       # grid size -> s6
+ 352 02f4               before_south:
+ 353 02f4 12C00006	        beq     $s6, $zero, loop_south         # if grid size = 0, done trees
+ 354 02f8 92340000	        lbu     $s4, 0($s1)                    # load byte from old gen
+ 355 02fc A2540000	        sb      $s4, 0($s2)                    # store byte in new gen
+ 356 0300 22310001	        addi    $s1, $s1, 1                    # increment second old gen ptr
+ 357 0304 22520001	        addi    $s2, $s2, 1                    # increment new gen pointer
+ 358 0308 22D6FFFF	        addi    $s6, $s6, -1                   # decrement grid counter
+ 359 030c 080000BD	        j       before_south
+ 360 0310               loop_south:
+ 361 0310 12600023	        beq     $s3, $zero, done_trees         # if grid counter = 0, done
+ 362 0314 92140000	        lbu     $s4, 0($s0)                    # old gen first -> s4
+ 363 0318 92350000	        lbu     $s5, 0($s1)                    # old gen second -> s5
+ 364 031c 16890003	        bne     $s4, $t1, skip_location_south  # if not tree, skip
+ 365 0320 16AA0002	        bne     $s5, $t2, skip_location_south  # if not also grass, skip
+ 366 0324 A2490000	        sb      $t1, 0($s2)                    # store tree in new gen
+ 367 0328 080000CC	        j       already_stored_south
+ 368 032c               skip_location_south:
+ 369 032c A2550000	        sb      $s5, 0($s2)                    # store old symbol in new gen
+ 370 0330               already_stored_south:
+ 371 0330 22100001	        addi    $s0, $s0, 1                    # increment old gen counter 1
+ 372 0334 22310001	        addi    $s1, $s1, 1                    # increment old gen counter 2
+ 373 0338 22520001	        addi    $s2, $s2, 1                    # increment new gen counter
+ 374 033c 2273FFFF	        addi    $s3, $s3, -1                   # decrement grid counter
+ 375 0340 080000C4	        j       loop_south
+ 376 0344               
+ 377 0344               wind_is_west:
+ 378 0344 3C170000	        la      $s7, new_generation            # another pointer -> s7
+     0348 36F70000
+ 379 034c 22310001	        addi    $s1, $s1, 1                    # s1 = next old gen
+ 380 0350               loop_west:
+ 381 0350 12600013	        beq     $s3, $zero, done_trees         # if grid counter = 0, done
+ 382 0354 0264001A	        rem     $s4, $s3, $a0                  # rem counter/grid size = t0
+     0358 0000A010
+ 383 035c 34150001	        li      $s5, 1                         # load 1 -> t1
+ 384 0360 16950003	        bne     $s4, $s5, not_last_col         # if last col, skip
+ 385 0364 92140000	        lbu     $s4, 0($s0)                    # load from old gen curr
+ 386 0368 A2540000	        sb      $s4, 0($s2)                    # store in new gen
+ 387 036c 080000E3	        j       already_stored_west
+ 388 0370               not_last_col:
+ 389 0370 92140000	        lbu     $s4, 0($s0)                    # old gen curr = s4
+ 390 0374 92350000	        lbu     $s5, 0($s1)                    # old gen next = s5
+ 391 0378 168A0003	        bne     $s4, $t2, skip_location_west   # if not grass, skip
+ 392 037c 16A90002	        bne     $s5, $t1, skip_location_west   # if also not tree, skip
+ 393 0380 A2490000	        sb      $t1, 0($s2)                    # store in next new gen spot
+ 394 0384 080000E3	        j       already_stored_west
+ 395 0388               skip_location_west:
+ 396 0388 A2540000	        sb      $s4, 0($s2)                    # store in next new gen spot
+ 397 038c               already_stored_west:
+ 398 038c 22100001	        addi    $s0, $s0, 1                    # increment old gen counter 1
+ 399 0390 22310001	        addi    $s1, $s1, 1                    # increment old gen counter 2
+ 400 0394 22520001	        addi    $s2, $s2, 1                    # increment new gen counter 1
+ 401 0398 2273FFFF	        addi    $s3, $s3, -1                   # decrement grid counter
+ 402 039c 080000D4	        j       loop_west
+ 403 03a0               
+ 404 03a0               done_trees:
+ 405 03a0 8FBF002C	        lw      $ra, -4+FRAMESIZE_48($sp)
+ 406 03a4 8FB70028	        lw      $s7, -8+FRAMESIZE_48($sp)
+ 407 03a8 8FB60024	        lw      $s6, -12+FRAMESIZE_48($sp)
+ 408 03ac 8FB50020	        lw      $s5, -16+FRAMESIZE_48($sp)
+ 409 03b0 8FB4001C	        lw      $s4, -20+FRAMESIZE_48($sp)
+ 410 03b4 8FB30018	        lw      $s3, -24+FRAMESIZE_48($sp)
+ 411 03b8 8FB20014	        lw      $s2, -28+FRAMESIZE_48($sp)
+ 412 03bc 8FB10010	        lw      $s1, -32+FRAMESIZE_48($sp)
+ 413 03c0 8FB0000C	        lw      $s0, -36+FRAMESIZE_48($sp)
+ 414 03c4 23BD0030	        addi    $sp, $sp, FRAMESIZE_48
+ 415 03c8               
+ 416 03c8 03E00008	        jr      $ra
+ 417 03cc               
+ 418 03cc               #
+ 419 03cc               # In charge of putting the new generation in the old spot
+ 420 03cc               #
+ 421 03cc               swap_generations:
+ 422 03cc 3C080000	        la      $t0, old_generation            # old generation = t0
+     03d0 35080000
+ 423 03d4 3C090000	        la      $t1, new_generation            # new generation = t1
+     03d8 35290000
+ 424 03dc 00840018	        mul     $t2, $a0, $a0                  # grid size = a0^2
+     03e0 00005012
+ 425 03e4               swap_loop:
+ 426 03e4 11400006	        beq     $t2, $zero, done_swap
+ 427 03e8 912B0000	        lbu     $t3, 0($t1)                    # load byte from new gen -> t3
+ 428 03ec A10B0000	        sb      $t3, 0($t0)                    # store byte frm new gen -> old
+ 429 03f0 21080001	        addi    $t0, $t0, 1                    # increment old gen pointer
+ 430 03f4 21290001	        addi    $t1, $t1, 1                    # increment new gen pointer
+ 431 03f8 214AFFFF	        addi    $t2, $t2, -1                   # decrement grid counter
+ 432 03fc 080000F9	        j       swap_loop
+ 433 0400               done_swap:
+ 434 0400 03E00008	        jr      $ra
+ 435 0404               
+ 436 0404               #
+ 437 0404               # Update generation with burning trees
+ 438 0404               #
+ 439 0404               change_generation_burning:
+ 440 0404 23BDFFD0	        addi    $sp, $sp,-FRAMESIZE_48
+ 441 0408 AFBF002C	        sw      $ra, -4+FRAMESIZE_48($sp)
+ 442 040c AFB70028	        sw      $s7, -8+FRAMESIZE_48($sp)
+ 443 0410 AFB60024	        sw      $s6, -12+FRAMESIZE_48($sp)
+ 444 0414 AFB50020	        sw      $s5, -16+FRAMESIZE_48($sp)
+ 445 0418 AFB4001C	        sw      $s4, -20+FRAMESIZE_48($sp)
+ 446 041c AFB30018	        sw      $s3, -24+FRAMESIZE_48($sp)
+ 447 0420 AFB20014	        sw      $s2, -28+FRAMESIZE_48($sp)
+ 448 0424 AFB10010	        sw      $s1, -32+FRAMESIZE_48($sp)
+ 449 0428 AFB0000C	        sw      $s0, -36+FRAMESIZE_48($sp)
+ 450 042c               
+ 451 042c 00809021	        move    $s2, $a0               # copy grid size -> s2
+ 452 0430               
+ 453 0430 3C100000	        la      $s0, old_generation    # pointer to old gen -> s0
+     0434 36100000
+ 454 0438 3C080000	        la      $t0, old_generation    # pointer to old gen next-> t0
+     043c 35080000
+ 455 0440 21080001	        addi    $t0, $t0, 1
+ 456 0444 3C090000	        la      $t1, old_generation    # pointer to old gen last -> t1
+     0448 35290000
+ 457 044c 2129FFFF	        addi    $t1, $t1, -1
+ 458 0450 3C0A0000	        la      $t2, old_generation    # pointer to old gen + grid -> t2
+     0454 354A0000
+ 459 0458 01525020	        add     $t2, $t2, $s2
+ 460 045c 3C0B0000	        la      $t3, old_generation    # pointer to old gen - grid -> t3
+     0460 356B0000
+ 461 0464 01725822	        sub     $t3, $t3, $s2
+ 462 0468               
+ 463 0468 3C110000	        la      $s1, new_generation    # pointer to new gen -> s1
+     046c 36310000
+ 464 0470 3C0C0000	        la      $t4, new_generation    # pointer to new gen next -> t4
+     0474 358C0000
+ 465 0478 218C0001	        addi    $t4, $t4, 1
+ 466 047c 3C0D0000	        la      $t5, new_generation    # pointer to new gen last -> t5
+     0480 35AD0000
+ 467 0484 21ADFFFF	        addi    $t5, $t5, -1
+ 468 0488 3C0E0000	        la      $t6, new_generation    # pointer to new gen + grid -> t6
+     048c 35CE0000
+ 469 0490 01D27020	        add     $t6, $t6, $s2
+ 470 0494 3C0F0000	        la      $t7, new_generation    # pointer to new gen - grid -> t7
+     0498 35EF0000
+ 471 049c 01F27822	        sub     $t7, $t7, $s2
+ 472 04a0               
+ 473 04a0 02520018	        mul     $s3, $s2, $s2          # square grid size for counter
+     04a4 00009812
+ 474 04a8 3C010000	        lbu     $t8, burning_tree      # t8 = (B)
+     04ac 90380000
+ 475 04b0 3C010000	        lbu     $t9, grass             # t9 = (.)
+     04b4 90390000
+ 476 04b8 3C010000	        lbu     $v0, tree              # v0 = (t)
+     04bc 90220000
+ 477 04c0               burning_loop:
+ 478 04c0 12600020	        beq     $s3, $zero, done_burning
+ 479 04c4 92140000	        lbu     $s4, 0($s0)                # load current byte from old gen
+ 480 04c8 13140001	        beq     $t8, $s4, found_one        # if s4 = t8, found (B)
+ 481 04cc 08000145	        j       increment_hell
+ 482 04d0               found_one:
+ 483 04d0 A2390000	        sb      $t9, 0($s1)                # update (B) -> (.)
+ 484 04d4 91140000	        lbu     $s4, 0($t0)                # load byte next space
+ 485 04d8 12820001	        beq     $s4, $v0, next_burning     # if (B) found burning
+ 486 04dc 08000139	        j       test_before
+ 487 04e0               next_burning:
+ 488 04e0 A1980000	        sb      $t8, 0($t4)                # store new (B) in new gen
+ 489 04e4               test_before:
+ 490 04e4 91340000	        lbu     $s4, 0($t1)                # load byte before space
+ 491 04e8 12820001	        beq     $s4, $v0, before_burning   # if (B) found burning
+ 492 04ec 0800013D	        j       test_plus_grid
+ 493 04f0               before_burning:
+ 494 04f0 A1B80000	        sb      $t8, 0($t5)                # store new (B) in new gen
+ 495 04f4               test_plus_grid:
+ 496 04f4 91540000	        lbu     $s4, 0($t2)                # load byte next row
+ 497 04f8 12820001	        beq     $s4, $v0, plus_burning     # if (B) found burning
+ 498 04fc 08000141	        j       test_minus_grid
+ 499 0500               plus_burning:
+ 500 0500 A1D80000	        sb      $t8, 0($t6)                # store new (B) in new gen
+ 501 0504               test_minus_grid:
+ 502 0504 91740000	        lbu     $s4, 0($t3)                # load byte last row
+ 503 0508 12820001	        beq     $s4, $v0, minus_burning    # if (B) found burning
+ 504 050c 08000145	        j       increment_hell
+ 505 0510               minus_burning:
+ 506 0510 A1F80000	        sb      $t8, 0($t7)                # store new (B) in new gen
+ 507 0514               increment_hell:
+ 508 0514 22100001	        addi    $s0, $s0, 1                # increment my manyyyyyy pointers
+ 509 0518 21080001	        addi    $t0, $t0, 1
+ 510 051c 21290001	        addi    $t1, $t1, 1
+ 511 0520 214A0001	        addi    $t2, $t2, 1
+ 512 0524 216B0001	        addi    $t3, $t3, 1
+ 513 0528 218C0001	        addi    $t4, $t4, 1
+ 514 052c 21AD0001	        addi    $t5, $t5, 1
+ 515 0530 21CE0001	        addi    $t6, $t6, 1
+ 516 0534 21EF0001	        addi    $t7, $t7, 1
+ 517 0538 22310001	        addi    $s1, $s1, 1
+ 518 053c 2273FFFF	        addi    $s3, $s3,-1
+ 519 0540 08000130	        j       burning_loop
+ 520 0544               done_burning:
+ 521 0544 8FBF002C	        lw      $ra, -4+FRAMESIZE_48($sp)
+ 522 0548 8FB70028	        lw      $s7, -8+FRAMESIZE_48($sp)
+ 523 054c 8FB60024	        lw      $s6, -12+FRAMESIZE_48($sp)
+ 524 0550 8FB50020	        lw      $s5, -16+FRAMESIZE_48($sp)
+ 525 0554 8FB4001C	        lw      $s4, -20+FRAMESIZE_48($sp)
+ 526 0558 8FB30018	        lw      $s3, -24+FRAMESIZE_48($sp)
+ 527 055c 8FB20014	        lw      $s2, -28+FRAMESIZE_48($sp)
+ 528 0560 8FB10010	        lw      $s1, -32+FRAMESIZE_48($sp)
+ 529 0564 8FB0000C	        lw      $s0, -36+FRAMESIZE_48($sp)
+ 530 0568 23BD0030	        addi    $sp, $sp, FRAMESIZE_48
+ 531 056c               
+ 532 056c 03E00008	        jr      $ra
+ 533 0570               
+ 534 0570               #
+ 535 0570               # Print the current generation out
+ 536 0570               #
+ 537 0570               print_current_generation:
+ 538 0570 23BDFFD0	        addi    $sp, $sp,-FRAMESIZE_48
+ 539 0574 AFBF002C	        sw      $ra, -4+FRAMESIZE_48($sp)
+ 540 0578 AFB70028	        sw      $s7, -8+FRAMESIZE_48($sp)
+ 541 057c AFB60024	        sw      $s6, -12+FRAMESIZE_48($sp)
+ 542 0580 AFB50020	        sw      $s5, -16+FRAMESIZE_48($sp)
+ 543 0584 AFB4001C	        sw      $s4, -20+FRAMESIZE_48($sp)
+ 544 0588 AFB30018	        sw      $s3, -24+FRAMESIZE_48($sp)
+ 545 058c AFB20014	        sw      $s2, -28+FRAMESIZE_48($sp)
+ 546 0590 AFB10010	        sw      $s1, -32+FRAMESIZE_48($sp)
+ 547 0594 AFB0000C	        sw      $s0, -36+FRAMESIZE_48($sp)
+ 548 0598               
+ 549 0598 0C000188	        jal     print_gen_box                # print top of box
+ 550 059c               
+ 551 059c 0C00024E	        jal     print_newline                # print newline
+ 552 05a0               
+ 553 05a0 00A08021	        move    $s0, $a1                     # move generation to print -> s0 
+ 554 05a4 00C60018	        mul     $s1, $a2, $a2                # t1 = (a2)^2
+     05a8 00008812
+ 555 05ac 00009020	        add     $s2, $zero, $zero            # t2 = line counter
+ 556 05b0                       
+ 557 05b0               print_generation_loop:
+ 558 05b0 1220000D	        beq     $s1, $zero, print_generation_end  
+ 559 05b4 16400001	        bne     $s2, $zero, continue_row
+ 560 05b8 0C0001AA	        jal     print_bar_char               # print bar (|) char
+ 561 05bc               
+ 562 05bc               continue_row:
+ 563 05bc 82040000	        lb      $a0, 0($s0)                  # load and print current byte
+ 564 05c0 3402000B	        li      $v0, PRINT_CHARACTER            
+ 565 05c4 0000000C	        syscall
+ 566 05c8               
+ 567 05c8 22520001	        addi    $s2, $s2, 1                       # increment curr char cnter
+ 568 05cc 2231FFFF	        addi    $s1, $s1, -1                      # decrement total counter 
+ 569 05d0 22100001	        addi    $s0, $s0, 1                       # increment char pointer
+ 570 05d4 1646FFF6	        bne     $s2, $a2, print_generation_loop   # if not new line, loop
+ 571 05d8               
+ 572 05d8 00009020	        add     $s2, $zero, $zero                 # reset curr char counter
+ 573 05dc 0C0001AA	        jal     print_bar_char                    # print bar (|) char
+ 574 05e0 0C00024E	        jal     print_newline                     # print newline
+ 575 05e4 0800016C	        j       print_generation_loop             # loop again
+ 576 05e8               
+ 577 05e8               print_generation_end:
+ 578 05e8 0C000188	        jal     print_gen_box                # print bottom of box
+ 579 05ec               
+ 580 05ec 0C00024E	        jal     print_newline                # print newlines for aesthetics
+ 581 05f0 0C00024E	        jal     print_newline
+ 582 05f4               
+ 583 05f4 8FBF002C	        lw      $ra, -4+FRAMESIZE_48($sp)
+ 584 05f8 8FB70028	        lw      $s7, -8+FRAMESIZE_48($sp)
+ 585 05fc 8FB60024	        lw      $s6, -12+FRAMESIZE_48($sp)
+ 586 0600 8FB50020	        lw      $s5, -16+FRAMESIZE_48($sp)
+ 587 0604 8FB4001C	        lw      $s4, -20+FRAMESIZE_48($sp)
+ 588 0608 8FB30018	        lw      $s3, -24+FRAMESIZE_48($sp)
+ 589 060c 8FB20014	        lw      $s2, -28+FRAMESIZE_48($sp)
+ 590 0610 8FB10010	        lw      $s1, -32+FRAMESIZE_48($sp)
+ 591 0614 8FB0000C	        lw      $s0, -36+FRAMESIZE_48($sp)
+ 592 0618 23BD0030	        addi    $sp, $sp, FRAMESIZE_48
+ 593 061c               
+ 594 061c 03E00008	        jr      $ra
+ 595 0620               
+ 596 0620               #
+ 597 0620               # Print the top and bottom of generation box
+ 598 0620               # 
+ 599 0620               print_gen_box:
+ 600 0620 23BDFFD0	        addi    $sp, $sp,-FRAMESIZE_48
+ 601 0624 AFBF002C	        sw      $ra, -4+FRAMESIZE_48($sp)
+ 602 0628 AFB70028	        sw      $s7, -8+FRAMESIZE_48($sp)
+ 603 062c AFB60024	        sw      $s6, -12+FRAMESIZE_48($sp)
+ 604 0630 AFB50020	        sw      $s5, -16+FRAMESIZE_48($sp)
+ 605 0634 AFB4001C	        sw      $s4, -20+FRAMESIZE_48($sp)
+ 606 0638 AFB30018	        sw      $s3, -24+FRAMESIZE_48($sp)
+ 607 063c AFB20014	        sw      $s2, -28+FRAMESIZE_48($sp)
+ 608 0640 AFB10010	        sw      $s1, -32+FRAMESIZE_48($sp)
+ 609 0644 AFB0000C	        sw      $s0, -36+FRAMESIZE_48($sp)
+ 610 0648               
+ 611 0648                       #
+ 612 0648                       # Print out corner
+ 613 0648                       #
+ 614 0648 00C08021	        move    $s0, $a2                     # move grid size -> s0
+ 615 064c 3404002B	        li      $a0, 43
+ 616 0650 3402000B	        li      $v0, PRINT_CHARACTER
+ 617 0654 0000000C	        syscall
+ 618 0658               
+ 619 0658                       #
+ 620 0658                       # Print out dashes
+ 621 0658                       #
+ 622 0658               print_dashes:
+ 623 0658 12000005	        beq     $s0, $zero, done_dashes
+ 624 065c 3404002D	        li      $a0, 45
+ 625 0660 3402000B	        li      $v0, PRINT_CHARACTER
+ 626 0664 0000000C	        syscall
+ 627 0668 2210FFFF	        addi    $s0, $s0, -1
+ 628 066c 08000196	        j       print_dashes        
+ 629 0670               
+ 630 0670                       #
+ 631 0670                       # Print out corner
+ 632 0670                       #
+ 633 0670               done_dashes:
+ 634 0670 3404002B	        li      $a0, 43
+ 635 0674 3402000B	        li      $v0, PRINT_CHARACTER
+ 636 0678 0000000C	        syscall
+ 637 067c               
+ 638 067c               
+ 639 067c 8FBF002C	        lw      $ra, -4+FRAMESIZE_48($sp)
+ 640 0680 8FB70028	        lw      $s7, -8+FRAMESIZE_48($sp)
+ 641 0684 8FB60024	        lw      $s6, -12+FRAMESIZE_48($sp)
+ 642 0688 8FB50020	        lw      $s5, -16+FRAMESIZE_48($sp)
+ 643 068c 8FB4001C	        lw      $s4, -20+FRAMESIZE_48($sp)
+ 644 0690 8FB30018	        lw      $s3, -24+FRAMESIZE_48($sp)
+ 645 0694 8FB20014	        lw      $s2, -28+FRAMESIZE_48($sp)
+ 646 0698 8FB10010	        lw      $s1, -32+FRAMESIZE_48($sp)
+ 647 069c 8FB0000C	        lw      $s0, -36+FRAMESIZE_48($sp)
+ 648 06a0 23BD0030	        addi    $sp, $sp, FRAMESIZE_48
+ 649 06a4               
+ 650 06a4 03E00008	        jr      $ra
+ 651 06a8               
+ 652 06a8               #
+ 653 06a8               # Print the bar (|) character
+ 654 06a8               #
+ 655 06a8               print_bar_char:
+ 656 06a8 3404007C	        li      $a0, 124
+ 657 06ac 3402000B	        li      $v0, PRINT_CHARACTER
+ 658 06b0 0000000C	        syscall
+ 659 06b4                       
+ 660 06b4 03E00008	        jr      $ra
+ 661 06b8               #
+ 662 06b8               # Prints the current generation number (a2)
+ 663 06b8               #
+ 664 06b8               print_gen_number:
+ 665 06b8 23BDFFD0	        addi    $sp, $sp,-FRAMESIZE_48
+ 666 06bc AFBF002C	        sw      $ra, -4+FRAMESIZE_48($sp)
+ 667 06c0 AFB70028	        sw      $s7, -8+FRAMESIZE_48($sp)
+ 668 06c4 AFB60024	        sw      $s6, -12+FRAMESIZE_48($sp)
+ 669 06c8 AFB50020	        sw      $s5, -16+FRAMESIZE_48($sp)
+ 670 06cc AFB4001C	        sw      $s4, -20+FRAMESIZE_48($sp)
+ 671 06d0 AFB30018	        sw      $s3, -24+FRAMESIZE_48($sp)
+ 672 06d4 AFB20014	        sw      $s2, -28+FRAMESIZE_48($sp)
+ 673 06d8 AFB10010	        sw      $s1, -32+FRAMESIZE_48($sp)
+ 674 06dc AFB0000C	        sw      $s0, -36+FRAMESIZE_48($sp)
+ 675 06e0               
+ 676 06e0 3C040000	        la      $a0, generation_num_str1     # print half of gen header
+     06e4 34840000
+ 677 06e8 34020004	        li      $v0, PRINT_STRING
+ 678 06ec 0000000C	        syscall
+ 679 06f0               
+ 680 06f0 00E02021	        move    $a0, $a3                     # print number of gen
+ 681 06f4 34020001	        li      $v0, PRINT_INT
+ 682 06f8 0000000C	        syscall
+ 683 06fc               
+ 684 06fc 3C040000	        la      $a0, generation_num_str2     # print other half of gen header
+     0700 34840000
+ 685 0704 34020004	        li      $v0, PRINT_STRING
+ 686 0708 0000000C	        syscall
+ 687 070c               
+ 688 070c 0C00024E	        jal     print_newline
+ 689 0710               
+ 690 0710 8FBF002C	        lw      $ra, -4+FRAMESIZE_48($sp)
+ 691 0714 8FB70028	        lw      $s7, -8+FRAMESIZE_48($sp)
+ 692 0718 8FB60024	        lw      $s6, -12+FRAMESIZE_48($sp)
+ 693 071c 8FB50020	        lw      $s5, -16+FRAMESIZE_48($sp)
+ 694 0720 8FB4001C	        lw      $s4, -20+FRAMESIZE_48($sp)
+ 695 0724 8FB30018	        lw      $s3, -24+FRAMESIZE_48($sp)
+ 696 0728 8FB20014	        lw      $s2, -28+FRAMESIZE_48($sp)
+ 697 072c 8FB10010	        lw      $s1, -32+FRAMESIZE_48($sp)
+ 698 0730 8FB0000C	        lw      $s0, -36+FRAMESIZE_48($sp)
+ 699 0734 23BD0030	        addi    $sp, $sp, FRAMESIZE_48
+ 700 0738               
+ 701 0738 03E00008	        jr      $ra
+ 702 073c               
+ 703 073c               #
+ 704 073c               # Check parameters to make sure they are in the constraints given
+ 705 073c               #
+ 706 073c               error_checking:
+ 707 073c               
+ 708 073c 23BDFFD0	        addi    $sp, $sp,-FRAMESIZE_48
+ 709 0740 AFBF002C	        sw      $ra, -4+FRAMESIZE_48($sp)
+ 710 0744 AFB70028	        sw      $s7, -8+FRAMESIZE_48($sp)
+ 711 0748 AFB60024	        sw      $s6, -12+FRAMESIZE_48($sp)
+ 712 074c AFB50020	        sw      $s5, -16+FRAMESIZE_48($sp)
+ 713 0750 AFB4001C	        sw      $s4, -20+FRAMESIZE_48($sp)
+ 714 0754 AFB30018	        sw      $s3, -24+FRAMESIZE_48($sp)
+ 715 0758 AFB20014	        sw      $s2, -28+FRAMESIZE_48($sp)
+ 716 075c AFB10010	        sw      $s1, -32+FRAMESIZE_48($sp)
+ 717 0760 AFB0000C	        sw      $s0, -36+FRAMESIZE_48($sp)
+ 718 0764               
+ 719 0764 34150004	        li      $s5, 4
+ 720 0768 0095802A	        slt     $s0, $a0, $s5                  # is grid size < 4?
+ 721 076c 1600003B	        bne     $s0, $zero, print_grid_error
+ 722 0770               
+ 723 0770 3415001F	        li      $s5, 31
+ 724 0774 0095882A	        slt     $s1, $a0, $s5                  # is grid size < 31?
+ 725 0778 12200038	        beq     $s1, $zero, print_grid_error
+ 726 077c               
+ 727 077c 00A0902A	        slt     $s2, $a1, $zero                # is gen num < 0?
+ 728 0780 1640002F	        bne     $s2, $zero, print_gen_error
+ 729 0784                
+ 730 0784 34150015	        li      $s5, 21
+ 731 0788 00B5982A	        slt     $s3, $a1, $s5                  # is gen num < 21?
+ 732 078c 1260002C	        beq     $s3, $zero, print_gen_error
+ 733 0790               
+ 734 0790 3C010000	        lbu     $s4, wind_north                # check if wind is north
+     0794 90340000
+ 735 0798 10D40010	        beq     $a2, $s4, check_grid
+ 736 079c               
+ 737 079c 3C010000	        lbu     $s4, wind_east                 # check if wind is east
+     07a0 90340000
+ 738 07a4 10D4000D	        beq     $a2, $s4, check_grid
+ 739 07a8               
+ 740 07a8 3C010000	        lbu     $s4, wind_south                # check if wind is south
+     07ac 90340000
+ 741 07b0 10D4000A	        beq     $a2, $s4, check_grid
+ 742 07b4               
+ 743 07b4 3C010000	        lbu     $s4, wind_west                 # check if wind is west
+     07b8 90340000
+ 744 07bc 10D40007	        beq     $a2, $s4, check_grid
+ 745 07c0                
+ 746 07c0 3C040000	        la      $a0, wind_error                # no match, print error
+     07c4 34840000
+ 747 07c8 34020004	        li      $v0, PRINT_STRING
+ 748 07cc 0000000C	        syscall
+ 749 07d0               
+ 750 07d0 0C00024E	        jal     print_newline
+ 751 07d4               
+ 752 07d4 34020001	        li      $v0, 1                   # load 1 into v0 to show error
+ 753 07d8 0800021E	        j       done_error_checking
+ 754 07dc               
+ 755 07dc               check_grid:
+ 756 07dc 00840018	        mul     $s0, $a0, $a0            # number of chars to read = a0^2
+     07e0 00008012
+ 757 07e4 3C010000	        lbu     $s1, burning_tree        # load burning tree (B) -> s1
+     07e8 90310000
+ 758 07ec 3C010000	        lbu     $s2, tree                # load reg tree (t) -> s2
+     07f0 90320000
+ 759 07f4 3C010000	        lbu     $s3, grass               # load grass (.) -> s3
+     07f8 90330000
+ 760 07fc 00E0A821	        move    $s5, $a3                 # move grid array -> s5
+ 761 0800               
+ 762 0800               check_grid_loop:
+ 763 0800 1200001D	        beq     $s0, $zero, done_error_checking   # if s0 == 0, jump to done
+ 764 0804 92B40000	        lbu     $s4, 0($s5)                       # load char from grid array
+ 765 0808 12910003	        beq     $s4, $s1, check_grid_loop_match   # check if char = (B)
+ 766 080c 12920002	        beq     $s4, $s2, check_grid_loop_match   # check if char = (t)
+ 767 0810 12930001	        beq     $s4, $s3, check_grid_loop_match   # check if char = (.)
+ 768 0814 08000209	        j       print_input_error
+ 769 0818               
+ 770 0818               check_grid_loop_match:
+ 771 0818 22B50001	        addi    $s5, $s5, 1       # increment grid array
+ 772 081c 2210FFFF	        addi    $s0, $s0, -1      # decrement char counter
+ 773 0820 08000200	        j       check_grid_loop   # jump to top of loop
+ 774 0824               
+ 775 0824               print_input_error:
+ 776 0824 3C040000	        la      $a0, input_error
+     0828 34840000
+ 777 082c 34020004	        li      $v0, PRINT_STRING
+ 778 0830 0000000C	        syscall
+ 779 0834               
+ 780 0834 0C00024E	        jal     print_newline
+ 781 0838               
+ 782 0838 34020001	        li      $v0, 1                   # load 1 into v0 to show error
+ 783 083c 0800021E	        j       done_error_checking
+ 784 0840               
+ 785 0840               print_gen_error:
+ 786 0840 3C040000	        la      $a0, gen_error
+     0844 34840000
+ 787 0848 34020004	        li      $v0, PRINT_STRING
+ 788 084c 0000000C	        syscall
+ 789 0850               
+ 790 0850 0C00024E	        jal     print_newline        
+ 791 0854               
+ 792 0854 34020001	        li      $v0, 1                   # load 1 into v0 to show error     
+ 793 0858 0800021E	        j       done_error_checking
+ 794 085c               
+ 795 085c               print_grid_error:
+ 796 085c 3C040000	        la      $a0, grid_error
+     0860 34840000
+ 797 0864 34020004	        li      $v0, PRINT_STRING
+ 798 0868 0000000C	        syscall
+ 799 086c               
+ 800 086c 0C00024E	        jal     print_newline
+ 801 0870                   
+ 802 0870 34020001	        li      $v0, 1                   # load 1 into v0 to show error
+ 803 0874 0800021E	        j       done_error_checking
+ 804 0878               
+ 805 0878               done_error_checking:
+ 806 0878 8FBF002C	        lw      $ra, -4+FRAMESIZE_48($sp)
+ 807 087c 8FB70028	        lw      $s7, -8+FRAMESIZE_48($sp)
+ 808 0880 8FB60024	        lw      $s6, -12+FRAMESIZE_48($sp)
+ 809 0884 8FB50020	        lw      $s5, -16+FRAMESIZE_48($sp)
+ 810 0888 8FB4001C	        lw      $s4, -20+FRAMESIZE_48($sp)
+ 811 088c 8FB30018	        lw      $s3, -24+FRAMESIZE_48($sp)
+ 812 0890 8FB20014	        lw      $s2, -28+FRAMESIZE_48($sp)
+ 813 0894 8FB10010	        lw      $s1, -32+FRAMESIZE_48($sp)
+ 814 0898 8FB0000C	        lw      $s0, -36+FRAMESIZE_48($sp)
+ 815 089c 23BD0030	        addi    $sp, $sp, FRAMESIZE_48
+ 816 08a0               
+ 817 08a0 03E00008	        jr      $ra
+ 818 08a4               
+ 819 08a4               #
+ 820 08a4               # Print out the header for Forest Fire
+ 821 08a4               #
+ 822 08a4               print_header:
+ 823 08a4               
+ 824 08a4 23BDFFD0	        addi    $sp, $sp,-FRAMESIZE_48
+ 825 08a8 AFBF002C	        sw      $ra, -4+FRAMESIZE_48($sp)
+ 826 08ac AFB70028	        sw      $s7, -8+FRAMESIZE_48($sp)
+ 827 08b0 AFB60024	        sw      $s6, -12+FRAMESIZE_48($sp)
+ 828 08b4 AFB50020	        sw      $s5, -16+FRAMESIZE_48($sp)
+ 829 08b8 AFB4001C	        sw      $s4, -20+FRAMESIZE_48($sp)
+ 830 08bc AFB30018	        sw      $s3, -24+FRAMESIZE_48($sp)
+ 831 08c0 AFB20014	        sw      $s2, -28+FRAMESIZE_48($sp)
+ 832 08c4 AFB10010	        sw      $s1, -32+FRAMESIZE_48($sp)
+ 833 08c8 AFB0000C	        sw      $s0, -36+FRAMESIZE_48($sp)
+ 834 08cc                       
+ 835 08cc                       #
+ 836 08cc                       # Print out the top of the banner
+ 837 08cc                       #
+ 838 08cc 3C040000	        la      $a0, program_banner_1
+     08d0 34840000
+ 839 08d4 34020004	        li      $v0, PRINT_STRING
+ 840 08d8 0000000C	        syscall
+ 841 08dc               
+ 842 08dc 0C00024E	        jal     print_newline
+ 843 08e0               
+ 844 08e0                       #
+ 845 08e0                       # Print out the text for the banner
+ 846 08e0                       #
+ 847 08e0 3C040000	        la      $a0, program_banner_2
+     08e4 34840000
+ 848 08e8 34020004	        li      $v0, PRINT_STRING
+ 849 08ec 0000000C	        syscall
+ 850 08f0               
+ 851 08f0 0C00024E	        jal     print_newline
+ 852 08f4                  
+ 853 08f4                       #
+ 854 08f4                       # Print out the bottom of the banner
+ 855 08f4                       #
+ 856 08f4 3C040000	        la      $a0, program_banner_1       
+     08f8 34840000
+ 857 08fc 34020004	        li      $v0, PRINT_STRING
+ 858 0900 0000000C	        syscall  
+ 859 0904               
+ 860 0904 0C00024E	        jal     print_newline
+ 861 0908 0C00024E	        jal     print_newline
+ 862 090c               
+ 863 090c 8FBF002C	        lw      $ra, -4+FRAMESIZE_48($sp)
+ 864 0910 8FB70028	        lw      $s7, -8+FRAMESIZE_48($sp)
+ 865 0914 8FB60024	        lw      $s6, -12+FRAMESIZE_48($sp)
+ 866 0918 8FB50020	        lw      $s5, -16+FRAMESIZE_48($sp)
+ 867 091c 8FB4001C	        lw      $s4, -20+FRAMESIZE_48($sp)
+ 868 0920 8FB30018	        lw      $s3, -24+FRAMESIZE_48($sp)
+ 869 0924 8FB20014	        lw      $s2, -28+FRAMESIZE_48($sp)
+ 870 0928 8FB10010	        lw      $s1, -32+FRAMESIZE_48($sp)
+ 871 092c 8FB0000C	        lw      $s0, -36+FRAMESIZE_48($sp)
+ 872 0930 23BD0030	        addi    $sp, $sp, FRAMESIZE_48
+ 873 0934               
+ 874 0934 03E00008	        jr      $ra
+ 875 0938               
+ 876 0938               #
+ 877 0938               # Print. out a newline at the end
+ 878 0938               #
+ 879 0938               print_newline:
+ 880 0938 3C040000	        la      $a0, newline
+     093c 34840000
+ 881 0940 34020004	        li      $v0, PRINT_STRING
+ 882 0944 0000000C	        syscall
+ 883 0948               
+ 884 0948 03E00008	        jr      $ra
+
+
+FRAMESIZE_24               = 00000018   
+FRAMESIZE_40               = 00000028   
+FRAMESIZE_48               = 00000030   
+FRAMESIZE_8                = 00000008   
+PRINT_CHARACTER            = 0000000B   
+PRINT_INT                  = 00000001   
+PRINT_STRING               = 00000004   
+READ_INT                   = 00000005   
+READ_STRING                = 00000008   
+already_stored_east          000002D4 R  text 
+already_stored_north         00000258 R  text 
+already_stored_south         00000330 R  text 
+already_stored_west          0000038C R  text 
+before_burning               000004F0 R  text 
+before_south                 000002F4 R  text 
+burning_loop                 000004C0 R  text 
+burning_tree                 00000004 R  data 
+change_generation_burning    00000404 R  text 
+change_generation_trees      0000019C R  text 
+check_grid                   000007DC R  text 
+check_grid_loop              00000800 R  text 
+check_grid_loop_match        00000818 R  text 
+continue_row                 000005BC R  text 
+done_burning                 00000544 R  text 
+done_dashes                  00000670 R  text 
+done_error_checking          00000878 R  text 
+done_north                   0000026C R  text 
+done_reading                 0000008C R  text 
+done_swap                    00000400 R  text 
+done_trees                   000003A0 R  text 
+done_updating_gen            00000170 R  text 
+error_checking               0000073C R  text 
+fig_char                     00000007 R  data 
+found_one                    000004D0 R  text 
+gen_error                    00000060 R  data 
+generation_header_dash       00000041 R  data 
+generation_header_plus       0000003F R  data 
+generation_num_str1          00000032 R  data 
+generation_num_str2          00000039 R  data 
+generation_sides             00000043 R  data 
+generations_loop             00000138 R  text 
+grass                        00000006 R  data 
+grid_error                   00000047 R  data 
+increment_hell               00000514 R  text 
+input_error                  000000A3 R  data 
+kill_program                 000000B8 R  text 
+loop_east                    00000298 R  text 
+loop_north                   00000238 R  text 
+loop_south                   00000310 R  text 
+loop_west                    00000350 R  text 
+main                         00000000 R  text 
+minus_burning                00000510 R  text 
+new_generation               000027D4 R  data 
+newline                      00000045 R  data 
+next_burning                 000004E0 R  text 
+not_first_col                000002B8 R  text 
+not_last_col                 00000370 R  text 
+old_generation               000000C4 R  data 
+plus_burning                 00000500 R  text 
+print_bar_char               000006A8 R  text 
+print_current_generation     00000570 R  text 
+print_dashes                 00000658 R  text 
+print_gen_box                00000620 R  text 
+print_gen_error              00000840 R  text 
+print_gen_number             000006B8 R  text 
+print_generation_end         000005E8 R  text 
+print_generation_loop        000005B0 R  text 
+print_grid_error             0000085C R  text 
+print_header                 000008A4 R  text 
+print_input_error            00000824 R  text 
+print_newline                00000938 R  text 
+program_banner_1             00000012 R  data 
+program_banner_2             00000022 R  data 
+read_grid                    0000006C R  text 
+skip_location_east           000002D0 R  text 
+skip_location_north          00000254 R  text 
+skip_location_south          0000032C R  text 
+skip_location_west           00000388 R  text 
+swap_generations             000003CC R  text 
+swap_loop                    000003E4 R  text 
+test_before                  000004E4 R  text 
+test_minus_grid              00000504 R  text 
+test_plus_grid               000004F4 R  text 
+tree                         00000005 R  data 
+updating_generations         000000E4 R  text 
+wind_east                    00000001 R  data 
+wind_error                   00000085 R  data 
+wind_is_east                 00000288 R  text 
+wind_is_north                0000022C R  text 
+wind_is_south                000002EC R  text 
+wind_is_west                 00000344 R  text 
+wind_north                   00000000 R  data 
+wind_south                   00000002 R  data 
+wind_west                    00000003 R  data 
