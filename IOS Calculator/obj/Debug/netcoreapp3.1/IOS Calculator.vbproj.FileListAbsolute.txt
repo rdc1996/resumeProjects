@@ -1,0 +1,15 @@
+D:\Projects\Visual Basic\IOS Calculator\obj\Debug\netcoreapp3.1\IOS Calculator.vbproj.AssemblyReference.cache
+D:\Projects\Visual Basic\IOS Calculator\obj\Debug\netcoreapp3.1\IOS_Calculator.Form1.resources
+D:\Projects\Visual Basic\IOS Calculator\obj\Debug\netcoreapp3.1\IOS Calculator.vbproj.GenerateResource.cache
+D:\Projects\Visual Basic\IOS Calculator\obj\Debug\netcoreapp3.1\IOS Calculator.AssemblyInfoInputs.cache
+D:\Projects\Visual Basic\IOS Calculator\obj\Debug\netcoreapp3.1\IOS Calculator.AssemblyInfo.vb
+D:\Projects\Visual Basic\IOS Calculator\obj\Debug\netcoreapp3.1\IOS Calculator.vbproj.CoreCompileInputs.cache
+D:\Projects\Visual Basic\IOS Calculator\bin\Debug\netcoreapp3.1\IOS Calculator.exe
+D:\Projects\Visual Basic\IOS Calculator\bin\Debug\netcoreapp3.1\IOS Calculator.deps.json
+D:\Projects\Visual Basic\IOS Calculator\bin\Debug\netcoreapp3.1\IOS Calculator.runtimeconfig.json
+D:\Projects\Visual Basic\IOS Calculator\bin\Debug\netcoreapp3.1\IOS Calculator.runtimeconfig.dev.json
+D:\Projects\Visual Basic\IOS Calculator\bin\Debug\netcoreapp3.1\IOS Calculator.dll
+D:\Projects\Visual Basic\IOS Calculator\bin\Debug\netcoreapp3.1\IOS Calculator.pdb
+D:\Projects\Visual Basic\IOS Calculator\obj\Debug\netcoreapp3.1\IOS Calculator.dll
+D:\Projects\Visual Basic\IOS Calculator\obj\Debug\netcoreapp3.1\IOS Calculator.pdb
+D:\Projects\Visual Basic\IOS Calculator\obj\Debug\netcoreapp3.1\IOS Calculator.genruntimeconfig.cache
