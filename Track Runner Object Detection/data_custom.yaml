@@ -1,0 +1,6 @@
+train: D:\YOLO\train
+val: D:\YOLO\val
+
+nc: 1
+
+names: ["runner"]
